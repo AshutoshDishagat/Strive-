@@ -49,6 +49,8 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
   // Pipeline
   bool _isBusy = false;
   bool _isInitializing = true;
+  bool _isDisposing = false;        // True while camera is being torn down
+  bool _isBootingPipeline = false;  // Prevents concurrent boot calls (flicker fix)
   bool _sessionStarted = false;
   bool _modeApplied = false;
   String? _errorMessage;
@@ -226,21 +228,38 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
   }
 
   Future<void> _bootPipeline() async {
+    // Guard: Do not boot while another boot or a disposal is still in progress
+    if (_isBootingPipeline || _isDisposing) return;
+    _isBootingPipeline = true;
+
     if (widget.cameras.isEmpty) {
-      setState(() {
-        _errorMessage = "Hardware Check: No Camera Found";
-        _isInitializing = false;
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = "Hardware Check: No Camera Found";
+          _isInitializing = false;
+        });
+      }
+      _isBootingPipeline = false;
       return;
     }
 
-    // Camera
+    // Await any pending disposal before starting a new controller
+    if (_disposeFuture != null) {
+      try {
+        await _disposeFuture;
+      } catch (_) {}
+      _disposeFuture = null;
+    }
+
+    // Small buffer to let the Android surface fully release
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) { _isBootingPipeline = false; return; }
+
     final front = widget.cameras.firstWhere(
       (c) => c.lensDirection == CameraLensDirection.front,
       orElse: () => widget.cameras[0],
     );
 
-    // Initialize
     final controller = CameraController(
       front,
       ResolutionPreset.low,
@@ -252,16 +271,18 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
 
     try {
       await controller.initialize();
-      if (!mounted) return;
+      if (!mounted) {
+        // Controller was initialized but we're no longer mounted, dispose it
+        controller.dispose();
+        _isBootingPipeline = false;
+        return;
+      }
 
-      // Reusable
       final size = controller.value.previewSize!;
       _nv21Buffer = Uint8List((size.width * size.height * 1.5).toInt());
 
-      // Secure
       await controller.startImageStream((image) {
-        if (!_isBusy) {
-          // Throttle
+        if (!_isBusy && !_isDisposing) {
           if (DateTime.now().difference(_lastFrameTime).inMilliseconds > 1000) {
             _runVisionPipeline(image);
             _lastFrameTime = DateTime.now();
@@ -269,18 +290,25 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
         }
       });
 
-      setState(() {
-        _controller = controller;
-        _isInitializing = false;
-        _sessionStarted = true;
-      });
+      if (mounted) {
+        setState(() {
+          _controller = controller;
+          _isInitializing = false;
+          _sessionStarted = true;
+          _errorMessage = null; // Clear any previous error on success
+        });
+      }
     } catch (e) {
+      // Cleanup the failed controller
+      try { await controller.dispose(); } catch (_) {}
       if (mounted) {
         setState(() {
           _errorMessage = "Pipeline Boot Fail: ${e.toString().split('\n')[0]}";
           _isInitializing = false;
         });
       }
+    } finally {
+      _isBootingPipeline = false;
     }
   }
 
@@ -477,33 +505,41 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
 
 
   Future<void> _runVisionPipeline(CameraImage image) async {
+    // Pre-flight checks: abort if controller is gone or we're in teardown
+    if (_isDisposing || _controller == null || !_controller!.value.isInitialized) {
+      return;
+    }
+
     _isBusy = true;
 
-    // Watchdog
+    // Watchdog resets _isBusy if the pipeline hangs
     _stabilityWatchdog?.cancel();
     _stabilityWatchdog = Timer(const Duration(seconds: 4), () {
-      if (_isBusy && mounted) {
-        setState(() => _isBusy = false);
-      }
+      if (_isBusy && mounted) _isBusy = false;
     });
 
     try {
+      // Guard again after the async gap — controller may have been disposed
+      if (_isDisposing || _controller == null || !_controller!.value.isInitialized) {
+        return;
+      }
+
       final inputImage = await VisionUtils.buildInputImage(
         image: image,
         camera: _controller!.description,
         reusableBuffer: _nv21Buffer,
       );
 
-      if (inputImage == null) {
-        _isBusy = false;
-        return;
-      }
+      if (inputImage == null) return;
+
+      // Final guard before passing to ML Kit
+      if (_isDisposing) return;
 
       final faces = await _faceDetector.processImage(inputImage);
       final labels = await _imageLabeler.processImage(inputImage);
       _focusController.processDetection(faces, labels: labels);
     } catch (e) {
-      debugPrint("Vision Pipeline Lag: $e");
+      debugPrint("Vision Pipeline: $e");
     } finally {
       _isBusy = false;
       _stabilityWatchdog?.cancel();
@@ -598,33 +634,26 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
-      // backgrounded
-      if (_controller != null && _controller!.value.isInitialized) {
-        _disposeFuture = _controller!.dispose();
-        _controller = null;
+      // App going to background — safely tear down the camera
+      if (_controller != null && _controller!.value.isInitialized && !_isDisposing) {
+        _isDisposing = true;
+        _isBusy = false; // Unblock pipeline immediately
         _wasCameraActiveBeforePause = _focusController.isCameraActive;
-        // toggle
-        setState(() {});
+        final ctrl = _controller;
+        _controller = null;
+        _disposeFuture = ctrl!.dispose().then((_) {
+          _isDisposing = false;
+        }).catchError((_) {
+          _isDisposing = false;
+        });
+        if (mounted) setState(() {});
       }
     } else if (state == AppLifecycleState.resumed) {
-      // resumed
-      if (_wasCameraActiveBeforePause && _controller == null) {
-        setState(() {
-          _isInitializing = true;
-        });
-        final pending = _disposeFuture;
-        _disposeFuture = null;
-        if (pending != null) {
-          pending.whenComplete(() {
-            Future.delayed(const Duration(milliseconds: 300), () {
-              if (mounted) _bootPipeline();
-            });
-          });
-        } else {
-          Future.delayed(const Duration(milliseconds: 300), () {
-            if (mounted) _bootPipeline();
-          });
-        }
+      // App coming back to foreground — boot the camera after disposal completes
+      if (_wasCameraActiveBeforePause && _controller == null && !_isBootingPipeline) {
+        if (mounted) setState(() => _isInitializing = true);
+        // _bootPipeline internally awaits _disposeFuture, so just call it directly
+        _bootPipeline();
       }
       // Re-check guardian permissions in case user just granted them in Settings
       if (_dndEnabled && !_hasGuardianPermissions) {
@@ -637,6 +666,8 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _isDisposing = true; // Block any in-flight pipeline frames
+    _isBusy = false;
     _focusController.removeListener(_onFocusChange);
     WidgetsBinding.instance.removeObserver(this);
     _stabilityWatchdog?.cancel();

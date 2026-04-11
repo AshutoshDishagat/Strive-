@@ -66,7 +66,7 @@ class MyTaskHandler extends TaskHandler {
                   }
                 }
               } else {
-                // Whitelist mode (Default): Block everything EXCEPT allowed apps 
+                // Whitelist mode (Default): Block everything EXCEPT allowed apps
                 isRestricted = true;
                 if (targetAppsJson != null && targetAppsJson.isNotEmpty) {
                   final List<String> allowedApps = targetAppsJson.split(',');
@@ -79,22 +79,29 @@ class MyTaskHandler extends TaskHandler {
               if (isRestricted) {
                 log("Deep Work Protector: Restricted app detected: ${lastApp.packageName}. Blocking.");
 
-                final String? firstSeen = await FlutterForegroundTask.getData<String>(key: 'restricted_since');
+                final String? firstSeen =
+                    await FlutterForegroundTask.getData<String>(
+                        key: 'restricted_since');
                 if (firstSeen == null || firstSeen.isEmpty) {
-                   await FlutterForegroundTask.saveData(key: 'restricted_since', value: DateTime.now().millisecondsSinceEpoch.toString());
+                  await FlutterForegroundTask.saveData(
+                      key: 'restricted_since',
+                      value: DateTime.now().millisecondsSinceEpoch.toString());
                 } else {
-                   int firstTime = int.parse(firstSeen);
-                   if (DateTime.now().millisecondsSinceEpoch - firstTime >= 10000) {
-                      // 10 seconds passed, aggressively return to strive
-                      FlutterForegroundTask.launchApp();
-                   }
+                  int firstTime = int.parse(firstSeen);
+                  if (DateTime.now().millisecondsSinceEpoch - firstTime >=
+                      10000) {
+                    // 10 seconds passed, aggressively return to strive
+                    FlutterForegroundTask.launchApp();
+                  }
                 }
               } else {
-                await FlutterForegroundTask.saveData(key: 'restricted_since', value: '');
+                await FlutterForegroundTask.saveData(
+                    key: 'restricted_since', value: '');
               }
             } else {
               // Strive is back in foreground, reset timer
-              await FlutterForegroundTask.saveData(key: 'restricted_since', value: '');
+              await FlutterForegroundTask.saveData(
+                  key: 'restricted_since', value: '');
             }
           }
         }
@@ -175,7 +182,8 @@ class BackgroundFocusService {
     }
   }
 
-  Future<bool> start(Set<String> targetApps, {bool autoRequest = true, bool isBlacklist = false}) async {
+  Future<bool> start(Set<String> targetApps,
+      {bool autoRequest = true, bool isBlacklist = false}) async {
     if (!await checkPermissions()) {
       if (autoRequest) {
         await requestPermissions();
@@ -201,7 +209,7 @@ class BackgroundFocusService {
         myPkg = usageStats.last.packageName ?? myPkg;
       }
     } catch (_) {}
-    
+
     await FlutterForegroundTask.saveData(key: 'my_package_name', value: myPkg);
 
     return await FlutterForegroundTask.startService(
