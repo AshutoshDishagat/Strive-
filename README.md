@@ -62,6 +62,20 @@
 
 ## 🚀 Getting Started
 
+### ⚠️ Android "Restricted Settings" Fix
+Since Strive is currently sideloaded (not yet on Play Store), Android may block "Restricted Settings" for security. **You must enable this manually first:**
+1. Go to your phone **Settings** > **Apps** > **Strive**.
+2. Tap the **three dots** (top right corner) and select **"Allow restricted settings"**.
+3. Now you can successfully grant **Usage Access**, **Overlay**, and **Notification** permissions inside the app.
+
+---
+
+### 🧪 Beta Phase & Bug Reporting
+**Strive is in active development.** You may see "Pipeline Fail" errors or flickering on some phone models. 
+- **Found a bug?** Please inform the developer with your **Phone Model** details. Your feedback helps me stabilize the AI tracking for everyone!
+
+---
+
 ### Prerequisites
 
 - [Flutter SDK](https://flutter.dev/docs/get-started/install) `>=3.0.0`
