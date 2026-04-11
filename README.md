@@ -30,100 +30,60 @@
 ## ✨ Features
 
 ### 👨‍🎓 Student Side
-- **Focus Mode** — Locks the device into study mode using a foreground service
-- **Attention Tracking** — Uses the front camera + ML Kit to detect if the student is looking at the screen
-- **AI Tutor** — Powered by Google Gemini, students can ask study-related questions
-- **Study Reports** — View session history with duration, focus score, and exportable PDF reports
-- **Brain Games** — Mini games (Sudoku, Tango, Zip, Patches) to keep the mind sharp
-- **DND Mode** — Automatically silences notifications during study sessions
+- **Focus Mode** — Locks the device into study mode using a foreground service.
+- **Attention Tracking** — Uses the front camera + ML Kit to detect if the student is looking at the screen.
+- **AI Tutor** — Powered by Google Gemini, students can ask study-related questions.
+- **Study Reports** — View session history with focus scores and exportable PDF reports.
+- **Brain Games** — Mini games to keep the mind sharp during breaks.
 
 ### 👨‍👩‍👧 Parent Side
-- **Remote Study Session Trigger** — Parents can start a study session on the student's device remotely
-- **App Blocking** — Parents can select specific apps to block during a session
-- **Live Monitoring** — View student focus stats and session history
-- **Account Linking** — Securely link parent and student accounts via a unique code
+- **Remote Study Trigger** — Start a study session on the student's device remotely via FCM.
+- **App Blocking** — Select specific apps to restrict on the child's device.
+- **Live Monitoring** — View real-time focus stats and session history.
+- **Account Linking** — Simple one-time linking via a unique guardian code.
 
 ---
 
-## 🛠️ Tech Stack
+## 🚀 Getting Started (For Developers)
 
-| Technology | Usage |
-|---|---|
-| **Flutter** | Cross-platform UI framework |
-| **Firebase Auth** | User authentication (Email + Google Sign-In) |
-| **Cloud Firestore** | Real-time database for sessions & linking |
-| **Firebase Cloud Messaging (FCM)** | Push notifications to trigger remote study sessions |
-| **Google ML Kit** | Face detection for attention tracking |
-| **Google Gemini AI** | AI Tutor chat feature |
-| **SQLite (sqflite)** | Local session data storage |
-| **flutter_foreground_task** | Background focus mode service |
-
----
-
-## 🚀 Getting Started
-
-### ⚠️ Android "Restricted Settings" Fix
-Since Strive is currently sideloaded (not yet on Play Store), Android may block "Restricted Settings" for security. **You must enable this manually first:**
-1. Go to your phone **Settings** > **Apps** > **Strive**.
-2. Tap the **three dots** (top right corner) and select **"Allow restricted settings"**.
-3. Now you can successfully grant **Usage Access**, **Overlay**, and **Notification** permissions inside the app.
-
----
-
-### 🧪 Beta Phase & Bug Reporting
-**Strive is in active development.** You may see "Pipeline Fail" errors or flickering on some phone models. 
-- **Found a bug?** Please inform the developer with your **Phone Model** details. Your feedback helps me stabilize the AI tracking for everyone!
-
----
-
-### Prerequisites
-
-- [Flutter SDK](https://flutter.dev/docs/get-started/install) `>=3.0.0`
-- Android Studio or VS Code with Flutter extension
-- A Firebase project (see setup below)
-- A Google Gemini API key
-
----
+Follow these steps to clone and run the project locally.
 
 ### 1. Clone the Repository
-
 ```bash
 git clone https://github.com/AshutoshDishagat/Strive-.git
 cd Strive-/strive1
 ```
 
-### 2. Install Dependencies
-
+### 2. Install Flutter Dependencies
+Ensure you have [Flutter SDK](https://docs.flutter.dev/get-started/install) installed.
 ```bash
 flutter pub get
 ```
 
-### 3. Firebase Setup ⚠️
+### 3. Firebase Configuration ⚠️ (MANDATORY)
+This project **requires** its own Firebase instance to function. You MUST provide your own config file.
 
-> This app requires Firebase — you must set it up with your own credentials.
+1.  Create a project in the [Firebase Console](https://console.firebase.google.com/).
+2.  Add an **Android App** with the package name: `com.example.strive1`.
+3.  Download the `google-services.json` file.
+4.  Place it in the following directory:  
+    `strive1/android/app/google-services.json`
+5.  **Enable these Services** in your Firebase Console:
+    - **Authentication** (Email/Password + Google Sign-In)
+    - **Cloud Firestore**
+    - **Firebase Cloud Messaging (FCM)**
 
-1. Go to [Firebase Console](https://console.firebase.google.com/) and create a new project
-2. Add an **Android app** with package name: `com.example.strive1`
-3. Download `google-services.json` and place it in:
-   ```
-   strive1/android/app/google-services.json
-   ```
-4. Enable the following Firebase services:
-   - **Authentication** (Email/Password + Google Sign-In)
-   - **Cloud Firestore**
-   - **Firebase Cloud Messaging (FCM)**
-
-### 4. Gemini API Key ⚠️
-
-1. Get a free API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Open `strive1/lib/features/gemini/views/tutor_chat_view.dart`
-3. Replace the placeholder with your key:
-   ```dart
-   final model = GenerativeModel(model: 'gemini-pro', apiKey: 'YOUR_API_KEY_HERE');
-   ```
+### 4. Google Gemini AI Setup ⚠️
+The AI Tutor requires a Gemini API Key.
+1.  Generate a free key at [Google AI Studio](https://aistudio.google.com/app/apikey).
+2.  Open `lib/core/services/gemini_service.dart`.
+3.  Find the `_apiKey` variable at the top and paste your key:
+    ```dart
+    static const String _apiKey = 'YOUR_API_KEY_HERE';
+    ```
 
 ### 5. Run the App
-
+Connect an Android device or emulator and run:
 ```bash
 flutter run
 ```
@@ -137,55 +97,39 @@ strive1/
 ├── lib/
 │   ├── core/
 │   │   ├── db/               # SQLite database helper
-│   │   ├── services/         # Auth, Firestore, Background services
-│   │   ├── theme/            # App colors and theme
-│   │   └── widgets/          # Shared widgets
+│   │   ├── services/         # Auth, Firestore, Gemini, & Background services
+│   │   ├── theme/            # App colors & theme logic
+│   │   └── widgets/          # Shared UI components
 │   ├── features/
-│   │   ├── auth/             # Login, Register, Forgot Password
-│   │   ├── focus/            # Focus mode, attention tracking
-│   │   ├── games/            # Brain games (Sudoku, Tango, etc.)
-│   │   ├── gemini/           # AI Tutor chat
-│   │   ├── home/             # Student home screen
-│   │   ├── parent/           # Parent dashboard & controls
-│   │   ├── profile/          # User profile & settings
-│   │   └── reports/          # Session reports & PDF export
-│   ├── models/               # Data models (Session, UserProfile)
-│   └── main.dart             # App entry point
-├── android/                  # Android native configuration
-├── assets/                   # Images and icons
-└── pubspec.yaml              # Dependencies
+│   │   ├── auth/             # Login, Signup, & Password Recovery
+│   │   ├── focus/            # Real-time attention tracking & blocking
+│   │   ├── games/            # Educational mini-games
+│   │   ├── gemini/           # AI Tutor chat interface
+│   │   ├── parent/           # Guardian dashboard & remote controls
+│   │   └── reports/          # Session analytics & PDF generation
+│   ├── models/               # Shared Data Models
+│   └── main.dart             # Application Entry Point
+├── android/                  # Native Android configuration
+├── assets/                   # App icons & static media
+└── pubspec.yaml              # Dependencies & Asset configuration
 ```
 
 ---
 
-## ⚙️ Configuration
+## 🛠️ Tech Stack
 
-To build this project from source, you must provide your own API credentials:
-
-1.  **Firebase**: Place your `google-services.json` in `strive1/android/app/`.
-2.  **Gemini AI**: Add your API key in `lib/features/gemini/views/tutor_chat_view.dart`.
-
-> [!WARNING]
-> Accessing the **App Blocking** and **Foreground Focus** features requires high-level Android permissions (Usage Access, Overlay, and Camera).
-
----
-
-## ⚠️ Important Notes
-
-- `google-services.json` is **NOT included** in this repo.
-- The **Gemini API key** is not included. 
-- Tested on **Android** — iOS support may require additional configuration.
+- **Frontend**: Flutter (Dart)
+- **Local DB**: SQLite (via `sqflite`)
+- **Backend**: Firebase (Auth, Firestore, FCM)
+- **AI**: Google Gemini Pro (via `google_generative_ai`)
+- **ML**: Google ML Kit (Face Detection)
 
 ---
 
 ## 📄 License
-
 This project was developed as a **Final Year Project**. Feel free to use it for educational purposes.
 
----
-
 ## 👨‍💻 Developer
-
 **Ashutosh Dishagat**  
 Final Year BCA Student  
 GitHub: [@AshutoshDishagat](https://github.com/AshutoshDishagat)
