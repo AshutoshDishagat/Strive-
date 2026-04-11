@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/theme/colors.dart';
-import '../../../../core/services/gemini_service.dart';
+import 'package:strive1/core/theme/colors.dart';
+import 'package:strive1/core/services/gemini_service.dart';
 
 class TutorChatView extends StatefulWidget {
   const TutorChatView({super.key});

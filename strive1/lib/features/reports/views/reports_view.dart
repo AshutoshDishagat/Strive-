@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/colors.dart';
-import '../../../../core/db/database_helper.dart';
-import '../../../../core/services/firestore_service.dart';
-import '../../../../models/session.dart';
+import 'package:strive1/core/theme/colors.dart';
+import 'package:strive1/core/db/database_helper.dart';
+import 'package:strive1/core/services/firestore_service.dart';
+import 'package:strive1/models/session.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../../core/widgets/glass_error_banner.dart';
-import '../../../../core/theme/theme_controller.dart';
+import 'package:strive1/core/widgets/glass_error_banner.dart';
+import 'package:strive1/core/theme/theme_controller.dart';
 import '../services/reports_export_service.dart';
 
 class ReportsView extends StatefulWidget {
@@ -314,9 +314,9 @@ class _TimeframeReportCardState extends State<_TimeframeReportCard> {
   @override
   Widget build(BuildContext context) {
     int totalSeconds =
-        widget.sessions.fold(0, (sum, item) => sum + item.durationSeconds);
+        widget.sessions.fold<int>(0, (sum, item) => sum + item.durationSeconds);
     double totalScore =
-        widget.sessions.fold(0.0, (sum, item) => sum + item.engagementScore);
+        widget.sessions.fold<double>(0.0, (sum, item) => sum + item.engagementScore);
     double avgScore = widget.sessions.isEmpty
         ? 0
         : (totalScore / widget.sessions.length) * 100;

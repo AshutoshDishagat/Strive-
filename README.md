@@ -18,6 +18,15 @@
 
 ---
 
+## 📥 Download
+
+[![Download Strive](https://img.shields.io/badge/Download-Latest_APK-blue?style=for-the-badge&logo=android)](https://github.com/AshutoshDishagat/Strive-/releases/latest)
+
+> [!TIP]
+> **New to Strive?** Download the latest release above and install it on your Android device to get started immediately.
+
+---
+
 ## ✨ Features
 
 ### 👨‍🎓 Student Side
@@ -135,11 +144,22 @@ strive1/
 
 ---
 
+## ⚙️ Configuration
+
+To build this project from source, you must provide your own API credentials:
+
+1.  **Firebase**: Place your `google-services.json` in `strive1/android/app/`.
+2.  **Gemini AI**: Add your API key in `lib/features/gemini/views/tutor_chat_view.dart`.
+
+> [!WARNING]
+> Accessing the **App Blocking** and **Foreground Focus** features requires high-level Android permissions (Usage Access, Overlay, and Camera).
+
+---
+
 ## ⚠️ Important Notes
 
-- `google-services.json` is **NOT included** in this repo (contains private Firebase credentials). You must add your own.
-- The **Gemini API key** is not included. You must use your own free key from Google AI Studio.
-- App blocking and attention tracking features require **Android** and specific device permissions (Usage Stats, Overlay, Camera).
+- `google-services.json` is **NOT included** in this repo.
+- The **Gemini API key** is not included. 
 - Tested on **Android** — iOS support may require additional configuration.
 
 ---
@@ -153,5 +173,5 @@ This project was developed as a **Final Year Project**. Feel free to use it for 
 ## 👨‍💻 Developer
 
 **Ashutosh Dishagat**  
-Final Year B.Tech Student  
+Final Year BCA Student  
 GitHub: [@AshutoshDishagat](https://github.com/AshutoshDishagat)

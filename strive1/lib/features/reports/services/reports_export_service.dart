@@ -3,7 +3,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../../../models/session.dart';
+import 'package:strive1/models/session.dart';
 
 // ── Shared status colours ─────────────────────────────────────────────────────
 const _success = PdfColor.fromInt(0xFF4CAF50);
@@ -65,9 +65,9 @@ class ReportsExportService {
 
     // ── Stats ──────────────────────────────────────────────────────────────
     final int totalSeconds =
-        sessions.fold(0, (sum, s) => sum + s.durationSeconds);
+        sessions.fold<int>(0, (sum, s) => sum + s.durationSeconds);
     final double avgScore =
-        (sessions.fold(0.0, (sum, s) => sum + s.engagementScore) /
+        (sessions.fold<double>(0.0, (sum, s) => sum + s.engagementScore) /
                 sessions.length) *
             100;
 
