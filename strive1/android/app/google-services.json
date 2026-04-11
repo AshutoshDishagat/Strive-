@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "133609655081",
+    "project_id": "strive1-6addf",
+    "storage_bucket": "strive1-6addf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:133609655081:android:316e89f393e8733a10c538",
+        "android_client_info": {
+          "package_name": "com.example.strive1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "133609655081-4u2of1ntja2d5ntj169jserrmlnuk31q.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.strive1",
+            "certificate_hash": "6505b94da95576da71997788257a54d455d200ca"
+          }
+        },
+        {
+          "client_id": "133609655081-ttfjnl2ufjjid8h9icm66ja5unpte75i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGCxaD1hg78ugjfuE3B_VV2HTKW5mJnoA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "133609655081-ttfjnl2ufjjid8h9icm66ja5unpte75i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
