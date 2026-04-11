@@ -1,0 +1,10 @@
+# JVM crash logs
+hs_err_pid*.log
+replay_pid*.log
+
+# VS Code (optional - editors settings)
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
