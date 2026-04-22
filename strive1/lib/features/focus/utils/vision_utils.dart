@@ -15,14 +15,16 @@ class VisionUtils {
       final int height = image.height;
       final planes = image.planes;
 
-      // Handle
+      // Handle single plane (usually BGRA8888 on iOS)
       if (planes.length == 1) {
         return InputImage.fromBytes(
           bytes: planes[0].bytes,
           metadata: InputImageMetadata(
             size: Size(width.toDouble(), height.toDouble()),
             rotation: _getRotation(camera.sensorOrientation),
-            format: InputImageFormat.nv21,
+            format: defaultTargetPlatform == TargetPlatform.iOS 
+                ? InputImageFormat.bgra8888 
+                : InputImageFormat.nv21,
             bytesPerRow: planes[0].bytesPerRow,
           ),
         );

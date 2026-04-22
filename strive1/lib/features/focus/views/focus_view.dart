@@ -265,7 +265,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
       ResolutionPreset.low,
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid
-          ? ImageFormatGroup.nv21
+          ? ImageFormatGroup.yuv420
           : ImageFormatGroup.bgra8888,
     );
 

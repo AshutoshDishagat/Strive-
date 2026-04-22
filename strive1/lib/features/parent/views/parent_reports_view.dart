@@ -3,6 +3,7 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../core/services/firestore_service.dart';
 import '../../../models/session.dart';
+import '../../reports/widgets/study_charts.dart';
 
 class ParentReportsView extends StatefulWidget {
   final String studentId;
@@ -206,89 +207,116 @@ class _ParentReportsViewState extends State<ParentReportsView> {
 
   Widget _buildList() {
     final grouped = _grouped();
-    return ListView.builder(
-      padding: const EdgeInsets.all(24),
-      itemCount: grouped.length,
-      itemBuilder: (ctx, i) {
-        final title = grouped.keys.elementAt(i);
-        final sessions = grouped[title]!;
-        final totalSec =
-            sessions.fold<int>(0, (s, e) => s + e.durationSeconds);
-        final avgFocus = sessions.isEmpty
-            ? 0.0
-            : sessions.fold<double>(
-                    0.0, (s, e) => s + e.engagementScore) /
-                sessions.length *
-                100;
+    return ListView(
+      padding: const EdgeInsets.only(top: 8, bottom: 24),
+      children: [
+        // ── Charts Section ──
+        StudyTimeBarChart(
+          sessions: _sessions,
+          filter: _selectedFilter,
+        ),
+        EngagementLineChart(
+          sessions: _sessions,
+          filter: _selectedFilter,
+        ),
+        StudyModeChart(sessions: _sessions),
+        const SizedBox(height: 8),
+        // ── Sessions Header ──
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            'SESSION HISTORY',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // ── Grouped Session Cards ──
+        ...grouped.entries.toList().asMap().entries.map((entry) {
+          final title = entry.value.key;
+          final sessions = entry.value.value;
+          final totalSec =
+              sessions.fold<int>(0, (s, e) => s + e.durationSeconds);
+          final avgFocus = sessions.isEmpty
+              ? 0.0
+              : sessions.fold<double>(
+                      0.0, (s, e) => s + e.engagementScore) /
+                  sessions.length *
+                  100;
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.border),
-            boxShadow: ThemeController.instance.isDarkMode
-                ? []
-                : [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(8),
-                      blurRadius: 15,
-                      offset: const Offset(0, 4),
-                    )
+          return Container(
+            margin: const EdgeInsets.only(left: 24, right: 24, bottom: 16),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppColors.border),
+              boxShadow: ThemeController.instance.isDarkMode
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(8),
+                        blurRadius: 15,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withAlpha(25),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${sessions.length} Sessions',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withAlpha(25),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${sessions.length} Sessions',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  _statMini(Icons.timer_rounded, 'Time',
-                      _formatDuration(totalSec)),
-                  const SizedBox(width: 32),
-                  _statMini(Icons.bolt_rounded, 'Avg Focus',
-                      '${avgFocus.toStringAsFixed(0)}%'),
-                ],
-              ),
-              const SizedBox(height: 16),
-              ...sessions.map((s) => _sessionRow(s)),
-            ],
-          ),
-        );
-      },
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    _statMini(Icons.timer_rounded, 'Time',
+                        _formatDuration(totalSec)),
+                    const SizedBox(width: 32),
+                    _statMini(Icons.bolt_rounded, 'Avg Focus',
+                        '${avgFocus.toStringAsFixed(0)}%'),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ...sessions.map((s) => _sessionRow(s)),
+              ],
+            ),
+          );
+        }),
+      ],
     );
   }
 

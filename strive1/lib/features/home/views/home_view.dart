@@ -717,13 +717,14 @@ class _HomeViewState extends State<HomeView> {
   Widget _getChildForIndex(int index) {
     switch (index) {
       case 0:
-        return Padding(
+        return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
           child: Column(
             children: [
               _buildStatsSection(),
               const SizedBox(height: 32),
               _buildMainAction(),
+              const SizedBox(height: 100), // Extra space for floating bottom nav bar
             ],
           ),
         );

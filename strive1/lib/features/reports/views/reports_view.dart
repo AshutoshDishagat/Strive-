@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:strive1/core/widgets/glass_error_banner.dart';
 import 'package:strive1/core/theme/theme_controller.dart';
 import '../services/reports_export_service.dart';
+import '../widgets/study_charts.dart';
 
 class ReportsView extends StatefulWidget {
   const ReportsView({super.key});
@@ -152,7 +153,7 @@ class _ReportsViewState extends State<ReportsView> {
                     child: CircularProgressIndicator(color: AppColors.primary))
                 : _sessions.isEmpty
                     ? _buildEmptyState()
-                    : _buildList(),
+                    : _buildContentWithCharts(),
           ),
         ],
       ),
@@ -224,7 +225,7 @@ class _ReportsViewState extends State<ReportsView> {
     );
   }
 
-  Widget _buildList() {
+  Widget _buildContentWithCharts() {
     Map<String, List<Session>> grouped = {};
 
     for (var session in _sessions) {
@@ -252,18 +253,46 @@ class _ReportsViewState extends State<ReportsView> {
       grouped[key]!.add(session);
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(24),
-      itemCount: grouped.keys.length,
-      itemBuilder: (context, index) {
-        String title = grouped.keys.elementAt(index);
-        List<Session> sessions = grouped[title]!;
-        return _TimeframeReportCard(
-          title: title,
-          sessions: sessions,
-          initiallyExpanded: index == 0,
-        );
-      },
+    return ListView(
+      padding: const EdgeInsets.only(top: 8, bottom: 24),
+      children: [
+        // ── Charts Section ──
+        StudyTimeBarChart(
+          sessions: _sessions,
+          filter: _selectedFilter,
+        ),
+        EngagementLineChart(
+          sessions: _sessions,
+          filter: _selectedFilter,
+        ),
+        StudyModeChart(sessions: _sessions),
+        const SizedBox(height: 8),
+        // ── Sessions Header ──
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            'SESSION HISTORY',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // ── Grouped Session Cards ──
+        ...grouped.entries.toList().asMap().entries.map((entry) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: _TimeframeReportCard(
+              title: entry.value.key,
+              sessions: entry.value.value,
+              initiallyExpanded: entry.key == 0,
+            ),
+          );
+        }),
+      ],
     );
   }
 }

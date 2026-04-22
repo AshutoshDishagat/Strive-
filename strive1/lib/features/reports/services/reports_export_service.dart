@@ -43,7 +43,7 @@ class _PdfTheme {
 
   // Light — mirrors AppColors light mode
   static const light = _PdfTheme(
-    background:    PdfColor.fromInt(0xFFF5F7FA),
+    background:    PdfColors.white,
     surface:       PdfColors.white,
     rowAlt:        PdfColor.fromInt(0xFFF0F4F8),
     primary:       PdfColor.fromInt(0xFF3F51B5), // indigo
@@ -57,7 +57,7 @@ class ReportsExportService {
   static Future<void> exportAndShare(
     List<Session> sessions,
     String timeframe, {
-    bool isDark = true,
+    bool isDark = false,
   }) async {
     if (sessions.isEmpty) return;
 

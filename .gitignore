@@ -1,26 +1,11 @@
-# ─── JVM Crash Logs ───────────────────────────────────────
-hs_err_pid*.log
-replay_pid*.log
-
-# ─── OS Files ─────────────────────────────────────────────
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# ─── Editor Settings ──────────────────────────────────────
+# Redundant metadata
+.dart_tool/
 .vscode/
-.idea/
-*.iml
+pubspec.lock
 
-# ─── Build Outputs (APK/AAB should go in GitHub Releases) ──
-strive1/build/
-strive1/.dart_tool/
-strive1/.flutter-plugins
-strive1/.flutter-plugins-dependencies
-
-# ─── Secrets — NEVER commit these ─────────────────────────
-strive1/android/app/google-services.json
-*.env
-*.key
-*.keystore
-*.jks
+# Project folders
+strive1/test/
+strive1/.agents/
+.planning/
+strive1/android/.kotlin/
+strive1/assets/b.png
