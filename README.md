@@ -1,7 +1,9 @@
 # 📚 Strive — AI-Powered Study Ecosystem
 
 <p align="center">
-  <img src="strive1/assets/app_icon.png" alt="Strive Logo" width="120"/>
+  <img src="strive1/assets/a.png" alt="Strive Old Logo" width="120"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="strive1/assets/app_icon.png" alt="Strive New Logo" width="120"/>
 </p>
 
 <p align="center">
