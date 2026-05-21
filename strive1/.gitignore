@@ -50,3 +50,4 @@ out.txt
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/build/

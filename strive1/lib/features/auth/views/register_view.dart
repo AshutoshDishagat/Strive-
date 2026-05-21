@@ -24,6 +24,7 @@ class _RegisterViewState extends State<RegisterView> {
   bool _isLoading = false;
   String? _errorMessage;
   UserRole _selectedRole = UserRole.student;
+  String? _selectedAgeGroup;
 
   @override
   void dispose() {
@@ -43,6 +44,11 @@ class _RegisterViewState extends State<RegisterView> {
       return;
     }
 
+    if (_selectedRole == UserRole.student && _selectedAgeGroup == null) {
+      setState(() => _errorMessage = 'Please select an age group');
+      return;
+    }
+
     if (password != confirm) {
       setState(() => _errorMessage = 'Passwords do not match!');
       return;
@@ -53,7 +59,7 @@ class _RegisterViewState extends State<RegisterView> {
       _errorMessage = null;
     });
     try {
-      await _authService.signUpWithEmail(email, password, _selectedRole);
+      await _authService.signUpWithEmail(email, password, _selectedRole, ageGroup: _selectedAgeGroup);
       // Persist role locally on this device
       await _authService.saveLocalRole(_selectedRole);
       if (mounted) {
@@ -83,6 +89,11 @@ class _RegisterViewState extends State<RegisterView> {
   }
 
   void _loginWithGoogle() async {
+    if (_selectedRole == UserRole.student && _selectedAgeGroup == null) {
+      setState(() => _errorMessage = 'Please select an age group');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -90,7 +101,7 @@ class _RegisterViewState extends State<RegisterView> {
     try {
       final cred = await _authService.signInWithGoogle();
       if (cred?.user != null) {
-        await _authService.ensureProfileExists(cred!.user!, _selectedRole);
+        await _authService.ensureProfileExists(cred!.user!, _selectedRole, ageGroup: _selectedAgeGroup);
         // Persist role locally on this device
         await _authService.saveLocalRole(_selectedRole);
       }
@@ -133,6 +144,10 @@ class _RegisterViewState extends State<RegisterView> {
               ),
               const SizedBox(height: 24),
               _buildRoleSelector(),
+              if (_selectedRole == UserRole.student) ...[
+                const SizedBox(height: 24),
+                _buildAgeGroupSelector(),
+              ],
               const SizedBox(height: 24),
               _buildForm(),
               const SizedBox(height: 32),
@@ -261,9 +276,58 @@ class _RegisterViewState extends State<RegisterView> {
                 label: 'Parent',
                 icon: Icons.supervisor_account_rounded,
                 isActive: _selectedRole == UserRole.parent,
-                onTap: () => setState(() => _selectedRole = UserRole.parent),
+                onTap: () => setState(() {
+                  _selectedRole = UserRole.parent;
+                  _selectedAgeGroup = null; // Clear when switching to parent
+                }),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAgeGroupSelector() {
+    final ageGroups = ["4-8", "9-13", "14+"];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'AGE GROUP',
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+            boxShadow: ThemeController.instance.isDarkMode
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(8),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    )
+                  ],
+          ),
+          child: Row(
+            children: ageGroups.map((age) {
+              return _buildRoleTab(
+                label: age,
+                icon: Icons.cake_rounded,
+                isActive: _selectedAgeGroup == age,
+                onTap: () => setState(() => _selectedAgeGroup = age),
+              );
+            }).toList(),
           ),
         ),
       ],

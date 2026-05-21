@@ -45,7 +45,7 @@ class MyTaskHandler extends TaskHandler {
                   "com.example.strive1"; // Primary fallback
 
           if (lastApp != null) {
-            if (lastApp.packageName != myPackageName) {
+            if (lastApp.packageName != myPackageName && lastApp.packageName != "com.example.strive1") {
               // Retrieve
               final String? targetAppsJson =
                   await FlutterForegroundTask.getData<String>(
@@ -78,22 +78,7 @@ class MyTaskHandler extends TaskHandler {
 
               if (isRestricted) {
                 log("Deep Work Protector: Restricted app detected: ${lastApp.packageName}. Blocking.");
-
-                final String? firstSeen =
-                    await FlutterForegroundTask.getData<String>(
-                        key: 'restricted_since');
-                if (firstSeen == null || firstSeen.isEmpty) {
-                  await FlutterForegroundTask.saveData(
-                      key: 'restricted_since',
-                      value: DateTime.now().millisecondsSinceEpoch.toString());
-                } else {
-                  int firstTime = int.parse(firstSeen);
-                  if (DateTime.now().millisecondsSinceEpoch - firstTime >=
-                      10000) {
-                    // 10 seconds passed, aggressively return to strive
-                    FlutterForegroundTask.launchApp();
-                  }
-                }
+                FlutterForegroundTask.launchApp();
               } else {
                 await FlutterForegroundTask.saveData(
                     key: 'restricted_since', value: '');
@@ -201,12 +186,21 @@ class BackgroundFocusService {
     String myPkg = "com.example.strive1";
     try {
       final usageStats = await UsageStats.queryUsageStats(
-        DateTime.now().subtract(const Duration(seconds: 1)),
+        DateTime.now().subtract(const Duration(minutes: 5)),
         DateTime.now(),
       );
       if (usageStats.isNotEmpty) {
-        // The most recently used app right now is Strive itself
-        myPkg = usageStats.last.packageName ?? myPkg;
+        // Sort to get the truly most recent app (which should be Strive right now)
+        UsageInfo? lastApp;
+        for (var info in usageStats) {
+          if (info.packageName == null || info.lastTimeUsed == null) continue;
+          if (lastApp == null || (int.parse(info.lastTimeUsed!) > int.parse(lastApp.lastTimeUsed!))) {
+            lastApp = info;
+          }
+        }
+        if (lastApp != null && lastApp.packageName != null) {
+          myPkg = lastApp.packageName!;
+        }
       }
     } catch (_) {}
 

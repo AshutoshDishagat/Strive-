@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:strive1/core/theme/colors.dart';
 import 'package:strive1/core/db/database_helper.dart';
 import 'package:strive1/core/services/firestore_service.dart';
 import 'package:strive1/models/session.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:strive1/core/widgets/glass_error_banner.dart';
-import 'package:strive1/core/theme/theme_controller.dart';
 import '../services/reports_export_service.dart';
 import '../widgets/study_charts.dart';
 
 class ReportsView extends StatefulWidget {
-  const ReportsView({super.key});
+  final bool isKidsMode;
+  const ReportsView({super.key, this.isKidsMode = false});
 
   @override
   State<ReportsView> createState() => _ReportsViewState();
@@ -31,21 +30,15 @@ class _ReportsViewState extends State<ReportsView> {
   Future<void> _loadData() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-
-      // Load from local SQLite first
       final localSessions = await DatabaseHelper.instance.getSessions(user?.uid);
 
-      // Also load from Firestore (sessions from other devices / remote starts)
       List<Session> firestoreSessions = [];
       if (user != null) {
         try {
           firestoreSessions = await FirestoreService().getSessions();
-        } catch (_) {
-          // Firestore unavailable — local data is enough
-        }
+        } catch (_) {}
       }
 
-      // Merge: prefer local, add Firestore ones not already in local (dedup by startTime)
       final localKeys = localSessions.map((s) => s.startTime).toSet();
       final merged = [
         ...localSessions,
@@ -81,16 +74,19 @@ class _ReportsViewState extends State<ReportsView> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
-          'STUDY REPORTS',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
+          widget.isKidsMode ? 'MY PROGRESS 🏆' : 'STUDY REPORTS',
+          style: tt.titleMedium?.copyWith(
+            fontSize: widget.isKidsMode ? 18 : 16,
+            fontWeight: FontWeight.w900,
+            letterSpacing: widget.isKidsMode ? 1.5 : 1.2,
+            color: cs.primary, 
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -98,7 +94,7 @@ class _ReportsViewState extends State<ReportsView> {
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(50),
-          child: _buildTimeframeSelector(),
+          child: _buildTimeframeSelector(context),
         ),
       ),
       floatingActionButton: SizedBox(
@@ -112,24 +108,32 @@ class _ReportsViewState extends State<ReportsView> {
               );
               return;
             }
-
             try {
-              await ReportsExportService.exportAndShare(_sessions, _selectedFilter);
+              await ReportsExportService.exportAndShare(
+                  _sessions, _selectedFilter);
               if (!mounted) return;
               messenger.showSnackBar(
-                const SnackBar(content: Text("Report Created & Sharing... 📄")),
+                const SnackBar(
+                    content: Text("Report Created & Sharing... 📄")),
               );
             } catch (e) {
               if (!mounted) return;
               messenger.showSnackBar(
-                SnackBar(content: Text("Export failed: ${e.toString().split('\n')[0]}")),
+                SnackBar(
+                    content: Text(
+                        "Export failed: ${e.toString().split('\n')[0]}")),
               );
             }
           },
-          backgroundColor: AppColors.primary,
+          backgroundColor: cs.primary,
           elevation: 4,
-          icon: const Icon(Icons.share_rounded, color: Colors.black, size: 18),
-          label: const Text("REPORT", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 10)),
+          icon: Icon(Icons.share_rounded,
+              color: cs.onPrimary, size: 18),
+          label: Text("REPORT",
+              style: TextStyle(
+                  color: cs.onPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10)),
         ),
       ),
       body: Column(
@@ -150,17 +154,18 @@ class _ReportsViewState extends State<ReportsView> {
           Expanded(
             child: _isLoading
                 ? Center(
-                    child: CircularProgressIndicator(color: AppColors.primary))
+                    child: CircularProgressIndicator(color: cs.primary))
                 : _sessions.isEmpty
-                    ? _buildEmptyState()
-                    : _buildContentWithCharts(),
+                    ? _buildEmptyState(context)
+                    : _buildContentWithCharts(context),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTimeframeSelector() {
+  Widget _buildTimeframeSelector(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final filters = ['Daily', 'Weekly', 'Monthly'];
     return Container(
       height: 50,
@@ -174,19 +179,20 @@ class _ReportsViewState extends State<ReportsView> {
               onTap: () => setState(() => _selectedFilter = filter),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : AppColors.surface,
+                  color: isSelected ? cs.primary : cs.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected ? AppColors.primary : AppColors.border,
+                    color: isSelected ? cs.primary : cs.primary.withAlpha(50),
                     width: 1.5,
                   ),
                 ),
                 child: Text(
                   filter.toUpperCase(),
                   style: TextStyle(
-                    color: isSelected ? Colors.black : AppColors.textSecondary,
+                    color: isSelected ? cs.onPrimary : cs.onSurface.withAlpha(160),
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.1,
@@ -200,32 +206,31 @@ class _ReportsViewState extends State<ReportsView> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.bar_chart_rounded,
-              size: 80, color: AppColors.primary.withAlpha(25)),
+              size: 80, color: cs.primary.withAlpha(60)),
           const SizedBox(height: 16),
-          Text(
-            "No Records Yet",
-            style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold),
-          ),
+          Text("No Records Yet",
+              style: tt.titleLarge?.copyWith(fontSize: 18)),
           const SizedBox(height: 8),
           Text(
             "Complete a deep work session to see your stats.",
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            style: tt.bodyMedium,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildContentWithCharts() {
+  Widget _buildContentWithCharts(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     Map<String, List<Session>> grouped = {};
 
     for (var session in _sessions) {
@@ -235,11 +240,12 @@ class _ReportsViewState extends State<ReportsView> {
       if (_selectedFilter == 'Daily') {
         key = _formatDate(session.startTime);
       } else if (_selectedFilter == 'Weekly') {
-        final startOfWeek = date.subtract(Duration(days: date.weekday - 1));
+        final startOfWeek =
+            date.subtract(Duration(days: date.weekday - 1));
         final endOfWeek = startOfWeek.add(const Duration(days: 6));
-        key = "Week: ${_formatDate(startOfWeek.toIso8601String())} - ${_formatDate(endOfWeek.toIso8601String())}";
+        key =
+            "Week: ${_formatDate(startOfWeek.toIso8601String())} - ${_formatDate(endOfWeek.toIso8601String())}";
       } else {
-        // Monthly
         final months = [
           'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -256,32 +262,23 @@ class _ReportsViewState extends State<ReportsView> {
     return ListView(
       padding: const EdgeInsets.only(top: 8, bottom: 24),
       children: [
-        // ── Charts Section ──
-        StudyTimeBarChart(
-          sessions: _sessions,
-          filter: _selectedFilter,
-        ),
-        EngagementLineChart(
-          sessions: _sessions,
-          filter: _selectedFilter,
-        ),
+        StudyTimeBarChart(sessions: _sessions, filter: _selectedFilter),
+        EngagementLineChart(sessions: _sessions, filter: _selectedFilter),
         StudyModeChart(sessions: _sessions),
         const SizedBox(height: 8),
-        // ── Sessions Header ──
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
             'SESSION HISTORY',
-            style: TextStyle(
-              color: AppColors.textSecondary,
+            style: tt.labelSmall?.copyWith(
               fontSize: 11,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
+              color: cs.onSurface.withAlpha(130),
             ),
           ),
         ),
         const SizedBox(height: 12),
-        // ── Grouped Session Cards ──
         ...grouped.entries.toList().asMap().entries.map((entry) {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -342,10 +339,13 @@ class _TimeframeReportCardState extends State<_TimeframeReportCard> {
 
   @override
   Widget build(BuildContext context) {
-    int totalSeconds =
-        widget.sessions.fold<int>(0, (sum, item) => sum + item.durationSeconds);
-    double totalScore =
-        widget.sessions.fold<double>(0.0, (sum, item) => sum + item.engagementScore);
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    int totalSeconds = widget.sessions
+        .fold<int>(0, (sum, item) => sum + item.durationSeconds);
+    double totalScore = widget.sessions
+        .fold<double>(0.0, (sum, item) => sum + item.engagementScore);
     double avgScore = widget.sessions.isEmpty
         ? 0
         : (totalScore / widget.sessions.length) * 100;
@@ -354,18 +354,9 @@ class _TimeframeReportCardState extends State<_TimeframeReportCard> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
-        boxShadow: ThemeController.instance.isDarkMode
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withAlpha(8),
-                  blurRadius: 15,
-                  offset: const Offset(0, 4),
-                )
-              ],
+        border: Border.all(color: cs.primary.withAlpha(40)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,11 +368,7 @@ class _TimeframeReportCardState extends State<_TimeframeReportCard> {
                 child: Text(
                   widget.title,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: tt.titleMedium?.copyWith(fontSize: 15),
                 ),
               ),
               Row(
@@ -390,13 +377,13 @@ class _TimeframeReportCardState extends State<_TimeframeReportCard> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withAlpha(25),
+                      color: cs.primary.withAlpha(25),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       "${widget.sessions.length} Sessions",
                       style: TextStyle(
-                        color: AppColors.primary,
+                        color: cs.primary,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -405,25 +392,22 @@ class _TimeframeReportCardState extends State<_TimeframeReportCard> {
                   const SizedBox(width: 8),
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      setState(() {
-                        _isExpanded = !_isExpanded;
-                      });
-                    },
+                    onTap: () => setState(() => _isExpanded = !_isExpanded),
                     child: Padding(
                       padding: const EdgeInsets.all(4.0),
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: AppColors.surface,
+                          color: cs.surface,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(
+                              color: cs.primary.withAlpha(50)),
                         ),
                         child: Icon(
                           _isExpanded
                               ? Icons.keyboard_arrow_up
                               : Icons.keyboard_arrow_down,
-                          color: AppColors.textSecondary,
+                          color: cs.onSurface.withAlpha(130),
                           size: 20,
                         ),
                       ),
@@ -437,35 +421,38 @@ class _TimeframeReportCardState extends State<_TimeframeReportCard> {
           Row(
             children: [
               Expanded(
-                child: _buildStatMini(
-                    "Time", _formatDuration(totalSeconds), Icons.timer),
+                child: _buildStatMini(context, "Time",
+                    _formatDuration(totalSeconds), Icons.timer),
               ),
               Expanded(
-                child: _buildStatMini(
-                    "Focus", "${avgScore.toStringAsFixed(0)}%", Icons.bolt),
+                child: _buildStatMini(context, "Focus",
+                    "${avgScore.toStringAsFixed(0)}%", Icons.bolt),
               ),
             ],
           ),
           if (_isExpanded && widget.sessions.isNotEmpty) ...[
             const SizedBox(height: 24),
             Text("SESSIONS",
-                style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2)),
+                style: tt.labelSmall?.copyWith(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                  color: cs.onSurface.withAlpha(130),
+                )),
             const SizedBox(height: 12),
-            ...widget.sessions.map((s) => _buildSessionCard(s)),
+            ...widget.sessions.map((s) => _buildSessionCard(context, s)),
           ]
         ],
       ),
     );
   }
 
-  Widget _buildSessionCard(Session session) {
+  Widget _buildSessionCard(BuildContext context, Session session) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
     IconData modeIcon;
     String modeLabel;
-
     switch (session.studyMode) {
       case 'readingBook':
         modeIcon = Icons.menu_book;
@@ -488,19 +475,19 @@ class _TimeframeReportCardState extends State<_TimeframeReportCard> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: cs.primary.withAlpha(10),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: cs.primary.withAlpha(30)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withAlpha(20),
+              color: cs.primary.withAlpha(20),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(modeIcon, color: AppColors.primary, size: 20),
+            child: Icon(modeIcon, color: cs.primary, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -508,44 +495,36 @@ class _TimeframeReportCardState extends State<_TimeframeReportCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(modeLabel,
-                    style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14)),
+                    style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
                 Text(
                     "${(session.engagementScore * 100).toStringAsFixed(0)}% Focus • ${_formatTime(session.startTime)}",
-                    style: TextStyle(
-                        color: AppColors.textSecondary, fontSize: 12)),
+                    style: tt.bodySmall),
               ],
             ),
           ),
           Text(
             _formatDuration(session.durationSeconds),
-            style: TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 14),
+            style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatMini(String label, String value, IconData icon) {
+  Widget _buildStatMini(
+      BuildContext context, String label, String value, IconData icon) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     return Row(
       children: [
-        Icon(icon, color: AppColors.textSecondary, size: 16),
+        Icon(icon, color: cs.onSurface.withAlpha(130), size: 16),
         const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label,
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 10)),
+            Text(label, style: tt.bodySmall),
             Text(value,
-                style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold)),
+                style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
           ],
         )
       ],

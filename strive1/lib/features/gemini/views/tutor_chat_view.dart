@@ -253,6 +253,38 @@ class _TutorChatViewState extends State<TutorChatView> {
                 child: Row(
                   children: [
                     IconButton(
+                      icon: Icon(Icons.delete_outline_rounded, color: AppColors.textSecondary, size: 20),
+                      tooltip: 'Clear conversation',
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: AppColors.surface,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            title: Text("Clear Conversation", style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                            content: Text("This will delete all messages. Are you sure?", style: TextStyle(color: AppColors.textSecondary)),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: Text("Cancel", style: TextStyle(color: AppColors.textSecondary)),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  _geminiService.clearConversation();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.redAccent,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                child: const Text("Clear", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
                       icon: Icon(Icons.add_a_photo_rounded, color: AppColors.textSecondary, size: 20),
                       onPressed: _pickImage,
                     ),

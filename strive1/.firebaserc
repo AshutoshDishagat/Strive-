@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "strive1-6addf"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }

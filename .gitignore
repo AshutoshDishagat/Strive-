@@ -9,3 +9,14 @@ strive1/.agents/
 .planning/
 strive1/android/.kotlin/
 strive1/assets/b.png
+
+# Build artifacts
+strive1/android/build/
+strive1/build/
+
+# Firebase debug logs
+firebase-debug.log
+firebase-debug.*.log
+
+# Gemini antigravity
+.gemini/

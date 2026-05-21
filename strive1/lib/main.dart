@@ -13,6 +13,7 @@ import 'features/auth/views/login_view.dart';
 import 'features/home/views/home_view.dart';
 import 'features/parent/views/parent_main_view.dart';
 import 'features/focus/views/focus_view.dart';
+import 'features/onboarding/views/onboarding_view.dart';
 import 'models/user_profile.dart';
 
 // background
@@ -79,6 +80,13 @@ class _StriveAppState extends State<StriveApp> {
             brightness: isDark ? Brightness.dark : Brightness.light,
             scaffoldBackgroundColor: AppColors.background,
             primaryColor: AppColors.primary,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primary,
+              brightness: isDark ? Brightness.dark : Brightness.light,
+              primary: AppColors.primary,
+              surface: AppColors.surface,
+              error: AppColors.error,
+            ),
             fontFamily: 'Inter',
           ),
           home: FutureBuilder(
@@ -156,6 +164,10 @@ class _RoleGateState extends State<_RoleGate> {
   late final Stream<UserProfile?> _profileStream;
   UserRole? _localRole;
 
+  // ── Onboarding state ──────────────────────────────────────────────────────
+  bool _onboardingChecked = false;
+  bool _onboardingComplete = false;
+
   // ── Global remote-command listener ────────────────────────────────────────
   StreamSubscription<Map<String, dynamic>?>? _remoteCommandSub;
   bool _isHandlingRemoteCommand = false;
@@ -166,6 +178,17 @@ class _RoleGateState extends State<_RoleGate> {
     super.initState();
     _profileStream = _firestoreService.getUserProfileStream();
     _initLocalRoleAndListener();
+    _checkOnboarding();
+  }
+
+  Future<void> _checkOnboarding() async {
+    final done = await OnboardingView.isOnboardingComplete();
+    if (mounted) {
+      setState(() {
+        _onboardingChecked = true;
+        _onboardingComplete = done;
+      });
+    }
   }
 
   Future<void> _initLocalRoleAndListener() async {
@@ -332,6 +355,23 @@ class _RoleGateState extends State<_RoleGate> {
 
   @override
   Widget build(BuildContext context) {
+    // Wait until onboarding check is done
+    if (!_onboardingChecked) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: const SizedBox.shrink(),
+      );
+    }
+
+    // Show onboarding if not completed yet
+    if (!_onboardingComplete) {
+      return OnboardingView(
+        onComplete: () {
+          setState(() => _onboardingComplete = true);
+        },
+      );
+    }
+
     return StreamBuilder<UserProfile?>(
       stream: _profileStream,
       builder: (context, snapshot) {

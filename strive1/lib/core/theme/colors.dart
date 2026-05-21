@@ -7,8 +7,8 @@ class AppColors {
 
   // Primary
   static Color get primary => _isDark
-      ? const Color(0xFF00E5FF)
-      : const Color(0xFF3F51B5); // Indigo
+      ? const Color(0xFF42A5F5) // Professional Blue for 14+
+      : const Color(0xFF3F51B5); // Indigo for Light Mode
   static Color get accent =>
       _isDark ? const Color(0xFF00B8D4) : const Color(0xFF00BCD4); // Cyan
 

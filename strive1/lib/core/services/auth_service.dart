@@ -82,7 +82,7 @@ class AuthService {
     }
   }
 
-  Future<void> ensureProfileExists(User user, UserRole selectedRole) async {
+  Future<void> ensureProfileExists(User user, UserRole selectedRole, {String? ageGroup}) async {
     // Check if the user already has a profile (to prevent overwriting their role on every login)
     final existingProfile = await _firestoreService.getUserProfile();
     if (existingProfile == null) {
@@ -90,6 +90,7 @@ class AuthService {
         uid: user.uid,
         email: user.email?.trim().toLowerCase() ?? "",
         role: selectedRole,
+        ageGroup: ageGroup,
       ));
     } else {
       // Patch legacy accounts that don't have the email field saved in Firestore
@@ -98,6 +99,14 @@ class AuthService {
           uid: existingProfile.uid,
           email: user.email!.trim().toLowerCase(),
           role: existingProfile.role,
+          ageGroup: existingProfile.ageGroup ?? ageGroup,
+        ));
+      } else if (existingProfile.ageGroup == null && ageGroup != null) {
+        await _firestoreService.saveUserProfile(UserProfile(
+          uid: existingProfile.uid,
+          email: existingProfile.email,
+          role: existingProfile.role,
+          ageGroup: ageGroup,
         ));
       }
     }
@@ -105,7 +114,7 @@ class AuthService {
 
   // Email
   Future<UserCredential?> signUpWithEmail(
-      String email, String password, UserRole role) async {
+      String email, String password, UserRole role, {String? ageGroup}) async {
     final cred = await _auth.createUserWithEmailAndPassword(
         email: email, password: password);
     if (cred.user != null) {
@@ -113,6 +122,7 @@ class AuthService {
         uid: cred.user!.uid,
         email: email.trim().toLowerCase(),
         role: role,
+        ageGroup: ageGroup,
       );
       await _firestoreService.saveUserProfile(profile);
     }

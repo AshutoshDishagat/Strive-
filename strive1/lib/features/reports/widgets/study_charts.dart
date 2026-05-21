@@ -16,6 +16,8 @@ class StudyTimeBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final data = _buildBarData();
     if (data.isEmpty) return const SizedBox.shrink();
 
@@ -25,9 +27,9 @@ class StudyTimeBarChart extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: cs.primary.withAlpha(40)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,17 +39,17 @@ class StudyTimeBarChart extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(25),
+                  color: cs.primary.withAlpha(25),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.bar_chart_rounded,
-                    color: AppColors.primary, size: 18),
+                    color: cs.primary, size: 18),
               ),
               const SizedBox(width: 12),
               Text(
                 'STUDY TIME',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: cs.onSurface,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
@@ -66,21 +68,21 @@ class StudyTimeBarChart extends StatelessWidget {
                   enabled: true,
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipColor: (_) =>
-                        AppColors.surface.withAlpha(240),
+                        cs.surface.withAlpha(240),
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       final minutes = rod.toY.toInt();
                       final label = data[group.x.toInt()].label;
                       return BarTooltipItem(
                         '$label\n',
                         TextStyle(
-                          color: AppColors.textSecondary,
+                          color: cs.onSurface.withAlpha(150),
                           fontSize: 11,
                         ),
                         children: [
                           TextSpan(
                             text: '${minutes}m',
                             style: TextStyle(
-                              color: AppColors.primary,
+                              color: cs.primary,
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                             ),
@@ -107,7 +109,7 @@ class StudyTimeBarChart extends StatelessWidget {
                           child: Text(
                             '${value.toInt()}m',
                             style: TextStyle(
-                              color: AppColors.textSecondary,
+                              color: cs.onSurface.withAlpha(150),
                               fontSize: 10,
                             ),
                           ),
@@ -129,7 +131,7 @@ class StudyTimeBarChart extends StatelessWidget {
                           child: Text(
                             data[idx].shortLabel,
                             style: TextStyle(
-                              color: AppColors.textSecondary,
+                              color: cs.onSurface.withAlpha(150),
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
@@ -144,7 +146,7 @@ class StudyTimeBarChart extends StatelessWidget {
                   drawVerticalLine: false,
                   horizontalInterval: maxY > 0 ? maxY / 4 : 10,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: AppColors.border,
+                    color: cs.primary.withAlpha(20),
                     strokeWidth: 1,
                   ),
                 ),
@@ -162,8 +164,8 @@ class StudyTimeBarChart extends StatelessWidget {
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
                           colors: [
-                            AppColors.primary.withAlpha(120),
-                            AppColors.primary,
+                            cs.primary.withAlpha(120),
+                            cs.primary,
                           ],
                         ),
                       ),
@@ -242,6 +244,8 @@ class EngagementLineChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final data = _buildLineData();
     if (data.isEmpty) return const SizedBox.shrink();
 
@@ -249,9 +253,9 @@ class EngagementLineChart extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: cs.primary.withAlpha(40)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,17 +265,17 @@ class EngagementLineChart extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withAlpha(25),
+                  color: cs.secondary.withAlpha(25),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.show_chart_rounded,
-                    color: AppColors.accent, size: 18),
+                    color: cs.secondary, size: 18),
               ),
               const SizedBox(width: 12),
               Text(
                 'FOCUS TREND',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: cs.onSurface,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
@@ -290,7 +294,7 @@ class EngagementLineChart extends StatelessWidget {
                   enabled: true,
                   touchTooltipData: LineTouchTooltipData(
                     getTooltipColor: (_) =>
-                        AppColors.surface.withAlpha(240),
+                        cs.surface.withAlpha(240),
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((spot) {
                         final idx = spot.x.toInt();
@@ -299,14 +303,14 @@ class EngagementLineChart extends StatelessWidget {
                         return LineTooltipItem(
                           '$label\n',
                           TextStyle(
-                            color: AppColors.textSecondary,
+                            color: cs.onSurface.withAlpha(150),
                             fontSize: 11,
                           ),
                           children: [
                             TextSpan(
                               text: '${spot.y.toStringAsFixed(0)}%',
                               style: TextStyle(
-                                color: AppColors.accent,
+                                color: cs.secondary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
@@ -334,7 +338,7 @@ class EngagementLineChart extends StatelessWidget {
                           child: Text(
                             '${value.toInt()}%',
                             style: TextStyle(
-                              color: AppColors.textSecondary,
+                              color: cs.onSurface.withAlpha(150),
                               fontSize: 10,
                             ),
                           ),
@@ -361,7 +365,7 @@ class EngagementLineChart extends StatelessWidget {
                           child: Text(
                             data[idx].shortLabel,
                             style: TextStyle(
-                              color: AppColors.textSecondary,
+                              color: cs.onSurface.withAlpha(150),
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
@@ -376,7 +380,7 @@ class EngagementLineChart extends StatelessWidget {
                   drawVerticalLine: false,
                   horizontalInterval: 25,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: AppColors.border,
+                    color: cs.primary.withAlpha(20),
                     strokeWidth: 1,
                   ),
                 ),
@@ -388,7 +392,7 @@ class EngagementLineChart extends StatelessWidget {
                     }).toList(),
                     isCurved: true,
                     curveSmoothness: 0.3,
-                    color: AppColors.accent,
+                    color: cs.secondary,
                     barWidth: 3,
                     isStrokeCapRound: true,
                     dotData: FlDotData(
@@ -396,9 +400,9 @@ class EngagementLineChart extends StatelessWidget {
                       getDotPainter: (spot, percent, barData, index) {
                         return FlDotCirclePainter(
                           radius: 4,
-                          color: AppColors.accent,
+                          color: cs.secondary,
                           strokeWidth: 2,
-                          strokeColor: AppColors.card,
+                          strokeColor: cs.surface,
                         );
                       },
                     ),
@@ -408,8 +412,8 @@ class EngagementLineChart extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          AppColors.accent.withAlpha(60),
-                          AppColors.accent.withAlpha(5),
+                          cs.secondary.withAlpha(60),
+                          cs.secondary.withAlpha(5),
                         ],
                       ),
                     ),
@@ -483,16 +487,18 @@ class StudyModeChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final data = _buildPieData();
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final data = _buildPieData(context);
     if (data.isEmpty) return const SizedBox.shrink();
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: cs.primary.withAlpha(40)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -502,17 +508,17 @@ class StudyModeChart extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withAlpha(25),
+                  color: Colors.green.withAlpha(25),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.pie_chart_rounded,
-                    color: AppColors.success, size: 18),
+                    color: Colors.green, size: 18),
               ),
               const SizedBox(width: 12),
               Text(
                 'STUDY MODES',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: cs.onSurface,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
@@ -570,7 +576,7 @@ class StudyModeChart extends StatelessWidget {
                             child: Text(
                               d.label,
                               style: TextStyle(
-                                color: AppColors.textSecondary,
+                                color: cs.onSurface.withAlpha(150),
                                 fontSize: 12,
                               ),
                             ),
@@ -578,7 +584,7 @@ class StudyModeChart extends StatelessWidget {
                           Text(
                             '${d.value.toStringAsFixed(0)}%',
                             style: TextStyle(
-                              color: AppColors.textPrimary,
+                              color: cs.onSurface,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -596,8 +602,10 @@ class StudyModeChart extends StatelessWidget {
     );
   }
 
-  List<_PieSlice> _buildPieData() {
+  List<_PieSlice> _buildPieData(BuildContext context) {
     if (sessions.isEmpty) return [];
+
+    final cs = Theme.of(context).colorScheme;
 
     final Map<String, int> counts = {};
     for (final s in sessions) {
@@ -612,7 +620,7 @@ class StudyModeChart extends StatelessWidget {
       'mix': const Color(0xFFAB47BC),
       'strictBook': const Color(0xFFFF7043),
       'aiTutor': const Color(0xFFFFCA28),
-      'focus': AppColors.primary,
+      'focus': cs.primary,
     };
 
     final labels = {
@@ -629,7 +637,7 @@ class StudyModeChart extends StatelessWidget {
       return _PieSlice(
         label: labels[e.key] ?? e.key,
         value: pct,
-        color: colors[e.key] ?? AppColors.primary,
+        color: colors[e.key] ?? cs.primary,
       );
     }).toList()
       ..sort((a, b) => b.value.compareTo(a.value));

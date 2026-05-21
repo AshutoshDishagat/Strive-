@@ -142,6 +142,14 @@ class FirestoreService {
         ));
   }
 
+  /// Updates specific fields in the user's profile.
+  Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
+    await _withRetry(() => _db.collection('users').doc(uid).set(
+          data,
+          SetOptions(merge: true),
+        ));
+  }
+
   /// Updates ONLY the role field for the currently logged-in user.
   Future<void> setUserRole(UserRole role) async {
     final uid = currentUserId;
@@ -170,7 +178,6 @@ class FirestoreService {
       final doc = await _withRetry(() => _db.collection('users').doc(uid).get());
       if (!doc.exists) return null;
       final data = doc.data() as Map<String, dynamic>;
-      if (!data.containsKey('role')) return null;
       return UserProfile.fromMap({...data, 'uid': doc.id});
     } on FirebaseException catch (e) {
       debugPrint('[FirestoreService] getUserProfile failed: ${e.code}');
@@ -185,7 +192,6 @@ class FirestoreService {
     return _db.collection('users').doc(uid).snapshots().map((doc) {
       if (!doc.exists) return null;
       final data = doc.data() as Map<String, dynamic>;
-      if (!data.containsKey('role')) return null;
       return UserProfile.fromMap({...data, 'uid': doc.id});
     });
   }

@@ -56,6 +56,7 @@ class _ParentHomeViewState extends State<ParentHomeView> {
   void _showBlockedAppsPicker(String studentId, int minutes) {
     // A predefined list of common distractor apps
     final Map<String, String> commonApps = {
+      // Social & Media
       'Instagram': 'com.instagram.android',
       'TikTok': 'com.zhiliaoapp.musically',
       'YouTube': 'com.google.android.youtube',
@@ -66,6 +67,19 @@ class _ParentHomeViewState extends State<ParentHomeView> {
       'Discord': 'com.discord',
       'WhatsApp': 'com.whatsapp',
       'Netflix': 'com.netflix.mediaclient',
+      // Popular Games
+      'Roblox': 'com.roblox.client',
+      'Minecraft': 'com.mojang.minecraftpe',
+      'PUBG Mobile': 'com.tencent.ig',
+      'Free Fire': 'com.dts.freefireth',
+      'Call of Duty': 'com.activision.callofduty.shooter',
+      'Candy Crush': 'com.king.candycrushsaga',
+      'Clash of Clans': 'com.supercell.clashofclans',
+      'Subway Surfers': 'com.kiloo.subwaysurf',
+      'Among Us': 'com.innersloth.spacemafia',
+      'Brawl Stars': 'com.supercell.brawlstars',
+      'Genshin Impact': 'com.miHoYo.GenshinImpact',
+      'Mobile Legends': 'com.mobile.legends',
     };
 
     List<String> selectedPackages = [];

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/theme_controller.dart';
+import '../../../core/services/firestore_service.dart';
 import 'parent_home_view.dart';
 import 'parent_profile_view.dart';
-import '../../reports/views/reports_view.dart';
+import 'parent_reports_view.dart';
 
 class ParentMainView extends StatefulWidget {
   const ParentMainView({super.key});
@@ -23,8 +24,7 @@ class _ParentMainViewState extends State<ParentMainView> {
         index: _currentIndex,
         children: const [
           ParentHomeView(),
-          // Reuse the exact same Reports UI the student sees — same UID, same data
-          ReportsView(key: PageStorageKey('parent_reports')),
+          _ParentReportsTabWrapper(key: PageStorageKey('parent_reports')),
           ParentProfileView(),
         ],
       ),
@@ -103,6 +103,57 @@ class _ParentMainViewState extends State<ParentMainView> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ParentReportsTabWrapper extends StatefulWidget {
+  const _ParentReportsTabWrapper({super.key});
+
+  @override
+  State<_ParentReportsTabWrapper> createState() => _ParentReportsTabWrapperState();
+}
+
+class _ParentReportsTabWrapperState extends State<_ParentReportsTabWrapper> {
+  final _firestoreService = FirestoreService();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: StreamBuilder(
+        stream: _firestoreService.getUserProfileStream(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          final studentId = snapshot.data?.linkedStudentId;
+          if (studentId == null || studentId.isEmpty) {
+            return const Center(
+              child: Text(
+                'No student linked.\nPlease link a student to view reports.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+            );
+          }
+
+          return FutureBuilder<String?>(
+            future: _firestoreService.getUserDocEmail(studentId),
+            builder: (context, emailSnapshot) {
+              if (emailSnapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final email = emailSnapshot.data ?? 'Unknown Email';
+              return ParentReportsView(
+                studentId: studentId,
+                studentEmail: email,
+                isTab: true,
+              );
+            },
+          );
+        },
       ),
     );
   }

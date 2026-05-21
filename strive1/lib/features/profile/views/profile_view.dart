@@ -8,6 +8,9 @@ import '../../../core/widgets/glass_error_banner.dart';
 import 'personal_information_view.dart';
 import 'notification_preferences_view.dart';
 import 'linked_guardian_view.dart';
+import '../../../core/services/firestore_service.dart';
+import 'dart:async';
+import '../../../models/user_profile.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -21,11 +24,27 @@ class _ProfileViewState extends State<ProfileView> {
   int _streakDays = 0;
   bool _isLoading = true;
   String? _errorMessage;
+  String _selectedAgeGroup = '14+';
+  StreamSubscription<UserProfile?>? _profileSub;
 
   @override
   void initState() {
     super.initState();
+    _profileSub = FirestoreService().getUserProfileStream().listen((profile) {
+      if (mounted && profile?.ageGroup != null) {
+        // Map old values to current groups
+        String ag = profile!.ageGroup!;
+        if (ag == '19+' || ag == '14-18') ag = '14+';
+        setState(() => _selectedAgeGroup = ag);
+      }
+    });
     _loadStats();
+  }
+
+  @override
+  void dispose() {
+    _profileSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadStats() async {
@@ -33,10 +52,8 @@ class _ProfileViewState extends State<ProfileView> {
       final user = FirebaseAuth.instance.currentUser;
       final sessions = await DatabaseHelper.instance.getSessions(user?.uid);
 
-      // Calculate
       int streak = 0;
       if (sessions.isNotEmpty) {
-        // descending
         final uniqueDates = sessions
             .map((s) {
               final dt = DateTime.parse(s.startTime);
@@ -46,26 +63,22 @@ class _ProfileViewState extends State<ProfileView> {
             .toList()
           ..sort((a, b) => b.compareTo(a));
 
-        // yesterday
         final today = DateTime.now();
         final todayDate = DateTime(today.year, today.month, today.day);
 
         if (uniqueDates.isNotEmpty) {
           var currentDateToCheck = todayDate;
-
-          // yesterday
           if (uniqueDates.first.isAtSameMomentAs(todayDate) ||
               uniqueDates.first.isAtSameMomentAs(
                   todayDate.subtract(const Duration(days: 1)))) {
             currentDateToCheck = uniqueDates.first;
-
             for (var date in uniqueDates) {
               if (date.isAtSameMomentAs(currentDateToCheck)) {
                 streak++;
                 currentDateToCheck =
                     currentDateToCheck.subtract(const Duration(days: 1));
               } else {
-                break; // streak
+                break;
               }
             }
           }
@@ -88,40 +101,70 @@ class _ProfileViewState extends State<ProfileView> {
       }
     } finally {
       if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _updateAgeGroup(String newGroup) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final previousGroup = _selectedAgeGroup;
+    // Optimistic local update — UI changes immediately
+    setState(() {
+      _selectedAgeGroup = newGroup;
+      _isLoading = true;
+    });
+
+    try {
+      await FirestoreService().updateUserProfile(user.uid, {'age_group': newGroup});
+      debugPrint('[ProfileView] Age group updated to $newGroup');
+    } catch (e) {
+      debugPrint('[ProfileView] Failed to update age group: $e');
+      // Revert on failure
+      if (mounted) {
         setState(() {
-          _isLoading = false;
+          _selectedAgeGroup = previousGroup;
+          _errorMessage = 'Failed to update age group. Please try again.';
         });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final bg = Theme.of(context).scaffoldBackgroundColor;
+
     final user = FirebaseAuth.instance.currentUser;
     final displayName = user?.displayName?.split(' ').first ?? 'Student';
-    // Fallback
     final photoUrl = user?.photoURL ??
         'https://ui-avatars.com/api/?name=$displayName&background=00e5ff&color=0f2123&size=200';
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: bg,
       body: SafeArea(
         child: Column(
           children: [
-            // Header
+            // ── Header ──────────────────────────────────────────────────
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "USER PROFILE",
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
+                    _selectedAgeGroup == '14+' ? "ACCOUNT PROFILE" : "MY DETAILS 🦊",
+                    style: tt.titleMedium?.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
+                      color: cs.primary,
                     ),
                   ),
                 ],
@@ -140,13 +183,12 @@ class _ProfileViewState extends State<ProfileView> {
                     )
                   : const SizedBox.shrink(),
             ),
-
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // Section
                     const SizedBox(height: 24),
+                    // ── Avatar ────────────────────────────────────────────
                     Stack(
                       alignment: Alignment.bottomRight,
                       children: [
@@ -155,11 +197,10 @@ class _ProfileViewState extends State<ProfileView> {
                           height: 120,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border:
-                                Border.all(color: AppColors.primary, width: 4),
+                            border: Border.all(color: cs.primary, width: 4),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withAlpha(100),
+                                color: cs.primary.withAlpha(100),
                                 blurRadius: 15,
                               )
                             ],
@@ -172,42 +213,35 @@ class _ProfileViewState extends State<ProfileView> {
                         Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: AppColors.primary,
+                            color: cs.primary,
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.verified,
-                              color: AppColors.background, size: 20),
+                          child: Icon(Icons.verified, color: bg, size: 20),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
                     Text(
                       displayName,
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: tt.titleLarge?.copyWith(fontSize: 24),
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withAlpha(25),
+                        color: cs.primary.withAlpha(25),
                         borderRadius: BorderRadius.circular(20),
-                        border:
-                            Border.all(color: AppColors.primary.withAlpha(50)),
+                        border: Border.all(color: cs.primary.withAlpha(50)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.bolt, color: AppColors.primary, size: 16),
+                          Icon(Icons.bolt, color: cs.primary, size: 16),
                           const SizedBox(width: 4),
                           Text(
                             "DEEP WORK LEVEL: PRO",
                             style: TextStyle(
-                              color: AppColors.primary,
+                              color: cs.primary,
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.2,
@@ -216,19 +250,19 @@ class _ProfileViewState extends State<ProfileView> {
                         ],
                       ),
                     ),
-
-                    // Stats
+                    // ── Stats ─────────────────────────────────────────────
                     const SizedBox(height: 32),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: Row(
                         children: [
                           Expanded(
-                              child: _buildStatCard("TOTAL SESSIONS",
+                              child: _buildStatCard(context, "TOTAL SESSIONS",
                                   _isLoading ? "-" : "$_totalSessions")),
                           const SizedBox(width: 12),
                           Expanded(
                               child: _buildStatCard(
+                                  context,
                                   "FOCUS STREAK",
                                   _isLoading
                                       ? "-"
@@ -236,8 +270,7 @@ class _ProfileViewState extends State<ProfileView> {
                         ],
                       ),
                     ),
-
-                    // Settings
+                    // ── Settings ──────────────────────────────────────────
                     const SizedBox(height: 32),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -246,44 +279,105 @@ class _ProfileViewState extends State<ProfileView> {
                         children: [
                           Text(
                             "ACCOUNT SETTINGS",
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
+                            style: tt.labelSmall?.copyWith(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.5,
                             ),
                           ),
                           const SizedBox(height: 16),
-                          _buildListTile(Icons.person, "Personal Information", onTap: () {
+                          _buildListTile(context, Icons.person, "Personal Information",
+                              onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const PersonalInformationView(),
-                              ),
+                                  builder: (_) => const PersonalInformationView()),
                             );
                           }),
+                          _buildListTile(context, Icons.family_restroom,
+                              "Linked Guardian Account", onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const LinkedGuardianView()),
+                            );
+                          }),
+                          // Age Group Selector
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: cs.surface,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                    color: cs.primary.withAlpha(40)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: cs.primary.withAlpha(25),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(Icons.cake_rounded,
+                                        color: cs.primary, size: 20),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Text("App Age Group",
+                                        style: tt.bodyLarge?.copyWith(
+                                            fontWeight: FontWeight.w500)),
+                                  ),
+                                  DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: _selectedAgeGroup,
+                                      dropdownColor: cs.surface,
+                                      icon: Icon(Icons.keyboard_arrow_down,
+                                          color: cs.onSurface.withAlpha(130),
+                                          size: 20),
+                                      style: TextStyle(
+                                        color: cs.primary,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                      onChanged: (String? newValue) {
+                                        if (newValue != null) {
+                                          _updateAgeGroup(newValue);
+                                        }
+                                      },
+                                      items: const [
+                                        DropdownMenuItem(
+                                            value: '4-8',
+                                            child: Text('4-8 years')),
+                                        DropdownMenuItem(
+                                            value: '9-13',
+                                            child: Text('9-13 years')),
+                                        DropdownMenuItem(
+                                            value: '14+',
+                                            child: Text('14+ years')),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                           _buildListTile(
-                              Icons.family_restroom, "Linked Guardian Account", onTap: () {
+                              context, Icons.notifications, "Notification Preferences",
+                              onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const LinkedGuardianView(),
-                              ),
+                                  builder: (_) =>
+                                      const NotificationPreferencesView()),
                             );
                           }),
-                          _buildListTile(
-                              Icons.notifications, "Notification Preferences", onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const NotificationPreferencesView(),
-                              ),
-                            );
-                          }),
-                          _buildThemeToggle(),
+                          _buildThemeToggle(context),
                           const SizedBox(height: 8),
                           _buildLogoutTile(context),
-                          const SizedBox(height: 100), // Spacing
+                          const SizedBox(height: 100),
                         ],
                       ),
                     ),
@@ -297,41 +391,41 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  Widget _buildStatCard(String label, String value) {
+  Widget _buildStatCard(BuildContext context, String label, String value) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withAlpha(10),
+        color: cs.primary.withAlpha(15),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withAlpha(20)),
+        border: Border.all(color: cs.primary.withAlpha(40)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
-          ),
+          Text(label,
+              style: tt.labelSmall?.copyWith(
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              )),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              color: AppColors.primary,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Text(value,
+              style: TextStyle(
+                color: cs.primary,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              )),
         ],
       ),
     );
   }
 
-  Widget _buildListTile(IconData icon, String title, {VoidCallback? onTap}) {
+  Widget _buildListTile(BuildContext context, IconData icon, String title,
+      {VoidCallback? onTap}) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Material(
@@ -342,39 +436,28 @@ class _ProfileViewState extends State<ProfileView> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: cs.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-              boxShadow: ThemeController.instance.isDarkMode
-                  ? []
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withAlpha(8),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      )
-                    ],
+              border: Border.all(color: cs.primary.withAlpha(40)),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withAlpha(25),
+                    color: cs.primary.withAlpha(25),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: AppColors.primary, size: 20),
+                  child: Icon(icon, color: cs.primary, size: 20),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w500),
-                  ),
+                  child: Text(title,
+                      style: tt.bodyLarge
+                          ?.copyWith(fontWeight: FontWeight.w500)),
                 ),
-                Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                Icon(Icons.chevron_right,
+                    color: cs.onSurface.withAlpha(130)),
               ],
             ),
           ),
@@ -383,50 +466,40 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  Widget _buildThemeToggle() {
+  Widget _buildThemeToggle(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final bg = Theme.of(context).scaffoldBackgroundColor;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            ThemeController.instance.toggleTheme();
-          },
+          onTap: () => ThemeController.instance.toggleTheme(),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: cs.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-              boxShadow: ThemeController.instance.isDarkMode
-                  ? []
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withAlpha(8),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      )
-                    ],
+              border: Border.all(color: cs.primary.withAlpha(40)),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withAlpha(25),
+                    color: cs.primary.withAlpha(25),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: ValueListenableBuilder<bool>(
                     valueListenable:
                         ThemeController.instance.isDarkModeNotifier,
-                    builder: (context, isDark, child) {
-                      return Icon(
-                        isDark ? Icons.dark_mode : Icons.light_mode,
-                        color: AppColors.primary,
-                        size: 20,
-                      );
-                    },
+                    builder: (context, isDark, _) => Icon(
+                      isDark ? Icons.dark_mode : Icons.light_mode,
+                      color: cs.primary,
+                      size: 20,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -434,46 +507,41 @@ class _ProfileViewState extends State<ProfileView> {
                   child: ValueListenableBuilder<bool>(
                     valueListenable:
                         ThemeController.instance.isDarkModeNotifier,
-                    builder: (context, isDark, child) {
-                      return Text(
-                        isDark
-                            ? "App Theme (Dark Mode)"
-                            : "App Theme (Light Mode)",
-                        style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w500),
-                      );
-                    },
+                    builder: (context, isDark, _) => Text(
+                      isDark
+                          ? "App Theme (Dark Mode)"
+                          : "App Theme (Light Mode)",
+                      style:
+                          tt.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+                    ),
                   ),
                 ),
                 ValueListenableBuilder<bool>(
                   valueListenable: ThemeController.instance.isDarkModeNotifier,
-                  builder: (context, isDark, child) {
-                    return Container(
-                      width: 44,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.primary : AppColors.border,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: AnimatedAlign(
-                        duration: const Duration(milliseconds: 200),
-                        curve: Curves.easeInOut,
-                        alignment: isDark
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.all(2),
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.background : Colors.white,
-                            shape: BoxShape.circle,
-                          ),
+                  builder: (context, isDark, _) => Container(
+                    width: 44,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: isDark ? cs.primary : AppColors.border,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: AnimatedAlign(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeInOut,
+                      alignment: isDark
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.all(2),
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: isDark ? bg : Colors.white,
+                          shape: BoxShape.circle,
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -491,35 +559,34 @@ class _ProfileViewState extends State<ProfileView> {
         onTap: () async {
           final bool? confirm = await showDialog<bool>(
             context: context,
-            builder: (BuildContext context) {
+            builder: (BuildContext ctx) {
+              final cs2 = Theme.of(ctx).colorScheme;
+              final tt2 = Theme.of(ctx).textTheme;
               return AlertDialog(
-                backgroundColor: AppColors.surface,
+                backgroundColor: cs2.surface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(color: AppColors.border),
+                  side: BorderSide(color: cs2.primary.withAlpha(60)),
                 ),
                 title: Text("Log Out",
-                    style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold)),
+                    style: tt2.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold)),
                 content: Text(
                   "Are you sure you want to log out of your account?",
-                  style:
-                      TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                  style: tt2.bodyMedium,
                 ),
                 actions: [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text("Cancel",
-                        style: TextStyle(color: Colors.white70)),
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    child: Text("Cancel",
+                        style: TextStyle(color: cs2.onSurface.withAlpha(160))),
                   ),
                   ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(true),
+                    onPressed: () => Navigator.of(ctx).pop(true),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.redAccent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     child: const Text("Log Out",
                         style: TextStyle(
@@ -529,9 +596,7 @@ class _ProfileViewState extends State<ProfileView> {
               );
             },
           );
-
           if (confirm == true) {
-            // StreamBuilder
             await AuthService().signOut();
           }
         },
@@ -541,19 +606,11 @@ class _ProfileViewState extends State<ProfileView> {
             color: Colors.redAccent.withAlpha(20),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Row(
+          child: const Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.redAccent.withAlpha(30),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child:
-                    const Icon(Icons.logout, color: Colors.redAccent, size: 20),
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
+              Icon(Icons.logout, color: Colors.redAccent, size: 20),
+              SizedBox(width: 16),
+              Expanded(
                 child: Text(
                   "Log Out",
                   style: TextStyle(

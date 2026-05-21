@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Strive — AI-Powered Study Ecosystem</title>
+		<meta name="description" content="Presentation for Strive Final Year Project">
+		<meta name="author" content="Ashutosh Dishagat">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/night.min.css" id="theme">
+        
+        <style>
+            .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+                text-transform: none;
+                color: #61dafb; /* Flutter blue */
+            }
+            .reveal ul {
+                display: block;
+                width: 85%;
+                margin: 0 auto;
+            }
+            .reveal li {
+                font-size: 26pt;
+                margin-bottom: 20px;
+                line-height: 1.3;
+            }
+            .highlight { color: #f39c12; font-weight: bold;}
+            .tech-badge {
+                display: inline-block;
+                background: #333;
+                padding: 10px 20px;
+                border-radius: 8px;
+                margin: 10px;
+                font-size: 20pt;
+                border: 1px solid #555;
+            }
+            .mermaid-box {
+                background: white;
+                padding: 15px;
+                border-radius: 10px;
+                display: inline-block;
+            }
+        </style>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+
+                <!-- Slide 1: Intro -->
+				<section>
+					<h2>Strive</h2>
+					<h4>AI-Powered Study Ecosystem</h4>
+                    <br>
+					<p><small>Presented by</small></p>
+                    <p><strong>Ashutosh Dishagat</strong></p>
+                    <p><small>Final Year BCA Project</small></p>
+				</section>
+
+                <!-- Slide 2: Objective -->
+                <section>
+                    <h3>1. Objective & Relevance</h3>
+                    <br>
+                    <ul>
+                        <li><span class="highlight">Problem:</span> Constant digital distractions interrupting study sessions.</li>
+                        <li><span class="highlight">Relevance:</span> Traditional apps don't measure actual visual engagement. Parents lack non-intrusive monitoring.</li>
+                        <li><span class="highlight">Learning Goal:</span> Using mobile Machine Learning to track attention and enforce productivity.</li>
+                    </ul>
+                </section>
+
+                <!-- Slide 3: Background -->
+                <section>
+                    <h3>2. Background & Theory</h3>
+                    <br>
+                    <ul>
+                        <li><span class="highlight">Concepts:</span> Digital Wellbeing, Attention Tracking.</li>
+                        <li><span class="highlight">Existing Work:</span> Standard Pomodoro timers lack visual verification. Basic OS screen time limits.</li>
+                        <li><span class="highlight">Our Approach:</span> Attention Tracking via local ML-based face detection and head-pose estimation.</li>
+                    </ul>
+                </section>
+
+                <!-- Slide 4: Core Idea -->
+                <section>
+                    <h3>3. Core Idea & System Overview</h3>
+                    <br>
+                    <p>A dual-sided ecosystem ensuring focus and oversight.</p>
+                    <ul>
+                        <li><span class="highlight">Student App:</span> Focus Mode, Attention Tracker, AI Tutor, Brain Games, Study Reports.</li>
+                        <li><span class="highlight">Parent App:</span> Remote Study Trigger, Live Monitoring, App Blocking.</li>
+                    </ul>
+                </section>
+
+                <!-- Slide 5: Methodology -->
+                <section>
+                    <h3>4. Methodology & Flow</h3>
+                    <br>
+                    <ol style="font-size: 26pt; width: 85%; margin: 0 auto; text-align: left;">
+                        <li style="margin-bottom: 15px;">Session initiated (Student or Parent).</li>
+                        <li style="margin-bottom: 15px;">Device enters "Focus Mode" (Android foreground services).</li>
+                        <li style="margin-bottom: 15px;">ML Kit monitors front camera for attention.</li>
+                        <li style="margin-bottom: 15px;">Distracted? Timer pauses. Focused? Score increases.</li>
+                        <li style="margin-bottom: 15px;">Session ends → Generate report → Sync to cloud.</li>
+                    </ol>
+                </section>
+
+                <!-- Slide 6: Architecture -->
+                <section>
+                    <h3>5. System Architecture</h3>
+                    <br>
+                    <div class="mermaid-box">
+                        <pre class="mermaid" style="background: transparent; margin: 0;">
+graph TD
+    A[Flutter Frontend] --> B{Firebase Backend}
+    B --> C[Firestore DB]
+    B --> D[Cloud Messaging]
+    A --> E[Local: ML Kit Camera]
+    A --> F[Local: SQLite]
+    A --> G[External: Gemini Pro API]
+                        </pre>
+                    </div>
+                </section>
+
+                <!-- Slide 7: Tech Stack -->
+                <section>
+                    <h3>6. Tools & Technologies</h3>
+                    <br>
+                    <div>
+                        <span class="tech-badge">Flutter (Dart)</span>
+                        <span class="tech-badge">Firebase (Auth, FCM)</span>
+                        <span class="tech-badge">Cloud Firestore</span>
+                    </div>
+                    <div>
+                        <span class="tech-badge">SQLite</span>
+                        <span class="tech-badge">Google ML Kit</span>
+                        <span class="tech-badge">Gemini Pro API</span>
+                    </div>
+                </section>
+
+                <!-- Slide 8: Student UI -->
+                <section>
+                    <h3>7. Implementation: Student</h3>
+                    <br>
+                    <ul>
+                        <li><strong>Focus Mode UI:</strong> Distraction-free dashboard.</li>
+                        <li><strong>ML Indicator:</strong> Real-time camera overlay showing attention state.</li>
+                        <li><strong>AI Tutor:</strong> Chat interface powered by Gemini for instant help.</li>
+                    </ul>
+                    <p style="font-size: 20pt; color: #888;">[Replace with App Screenshot during presentation]</p>
+                </section>
+
+                <!-- Slide 9: Parent UI -->
+                <section>
+                    <h3>8. Implementation: Parent</h3>
+                    <br>
+                    <ul>
+                        <li><strong>Guardian Linking:</strong> Secure OTP/Code process.</li>
+                        <li><strong>Live Dashboard:</strong> Real-time statistics.</li>
+                        <li><strong>App Blocker:</strong> Remote toggle to restrict specific apps on child's device.</li>
+                    </ul>
+                    <p style="font-size: 20pt; color: #888;">[Replace with App Screenshot during presentation]</p>
+                </section>
+
+                <!-- Slide 10: Results -->
+                <section>
+                    <h3>9. Results & Findings</h3>
+                    <br>
+                    <ul>
+                        <li><strong>Observations:</strong> On-device ML Kit tracks attention locally with zero latency. No video leaves the device (Privacy First).</li>
+                        <li><strong>Outputs:</strong> Generation of comprehensive Study Reports with focus scores and exportable PDF visual analytics.</li>
+                    </ul>
+                </section>
+
+                <!-- Slide 11: Conclusion -->
+                <section>
+                    <h3>10. Conclusion</h3>
+                    <br>
+                    <ul>
+                        <li>Strive bridges the gap between digital distractions and focused learning.</li>
+                        <li>It combines active focus enforcement, real-time visual tracking, and parental oversight.</li>
+                        <li><strong>Learnings:</strong> On-device ML, Background Services, Generative AI.</li>
+                    </ul>
+                </section>
+
+                <!-- Slide 12: Future Scope -->
+                <section>
+                    <h3>11. Future Scope</h3>
+                    <br>
+                    <ul>
+                        <li>Cross-Platform Expansion (iOS & Web).</li>
+                        <li>Predictive analytics for study burnout.</li>
+                        <li>Gamification with leaderboards.</li>
+                        <li>Deeper OS-level integrations for strict mode.</li>
+                    </ul>
+                </section>
+
+                <!-- Slide 13: References -->
+                <section>
+                    <h3>12. References</h3>
+                    <br>
+                    <ul style="font-size: 24pt;">
+                        <li>Flutter Documentation: <i>docs.flutter.dev</i></li>
+                        <li>Firebase Documentation: <i>firebase.google.com/docs</i></li>
+                        <li>Google ML Kit Guidelines: <i>developers.google.com/ml-kit</i></li>
+                        <li>Google AI Studio: <i>aistudio.google.com</i></li>
+                    </ul>
+                </section>
+
+			</div>
+		</div>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+        <script type="module">
+            import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+            mermaid.initialize({ startOnLoad: true, theme: 'default' });
+        </script>
+		<script>
+			Reveal.initialize({
+				hash: true,
+                slideNumber: 'c/t',
+                transition: 'slide'
+			});
+		</script>
+	</body>
+</html>

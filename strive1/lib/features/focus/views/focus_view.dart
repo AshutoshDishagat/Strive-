@@ -26,6 +26,8 @@ class FocusView extends StatefulWidget {
   final bool autoStart;
   final int? targetMinutes; // When set by a parent remote command
   final List<String>? blockedApps; // Target distractor apps set by parent
+  final bool isKidsMode;
+
   const FocusView({
     super.key,
     required this.cameras,
@@ -33,6 +35,7 @@ class FocusView extends StatefulWidget {
     this.autoStart = false,
     this.targetMinutes,
     this.blockedApps,
+    this.isKidsMode = false,
   });
 
   @override
@@ -40,6 +43,14 @@ class FocusView extends StatefulWidget {
 }
 
 class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
+  Color get _bgColor => widget.isKidsMode ? const Color(0xFF131834) : AppColors.background;
+  Color get _surfaceColor => widget.isKidsMode ? const Color(0xFF1E2445) : AppColors.surface;
+  Color get _primaryColor => widget.isKidsMode ? Colors.cyanAccent : AppColors.primary;
+  Color get _borderColor => widget.isKidsMode ? Colors.purpleAccent.withAlpha(76) : AppColors.border;
+  Color get _textPrimary => widget.isKidsMode ? Colors.white : AppColors.textPrimary;
+  Color get _textSecondary => widget.isKidsMode ? Colors.white70 : AppColors.textSecondary;
+  Color get _accentColor => widget.isKidsMode ? Colors.purpleAccent : AppColors.accent;
+
   // Camera
   CameraController? _controller;
   late FaceDetector _faceDetector;
@@ -92,24 +103,24 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: AppColors.surface,
+          backgroundColor: _surfaceColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: AppColors.primary),
+            side: BorderSide(color: _primaryColor),
           ),
           title: Row(
             children: [
-              Icon(Icons.celebration_rounded, color: AppColors.primary),
+              Icon(Icons.celebration_rounded, color: _primaryColor),
               const SizedBox(width: 8),
               Text("Time's Up!",
                   style: TextStyle(
-                      color: AppColors.textPrimary,
+                      color: _textPrimary,
                       fontWeight: FontWeight.bold)),
             ],
           ),
           content: Text(
             "Congratulations! You have completed your targeted study goal. Fantastic job maintaining your focus.",
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            style: TextStyle(color: _textSecondary, fontSize: 14),
           ),
           actions: [
             TextButton(
@@ -132,7 +143,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                 _endSession(); // Actually end and pop
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: _primaryColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -361,7 +372,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
         } else {
           final bool? choice = await showModalBottomSheet<bool>(
             context: context,
-            backgroundColor: AppColors.background,
+            backgroundColor: _bgColor,
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
@@ -375,7 +386,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                   Text(
                     "App Guardian",
                     style: TextStyle(
-                      color: AppColors.textPrimary,
+                      color: _textPrimary,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -384,7 +395,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                   Text(
                     "You have ${_allowedApps.length} apps allowed from your previous session.",
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: _textSecondary,
                       fontSize: 14,
                     ),
                   ),
@@ -392,7 +403,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                   ElevatedButton(
                     onPressed: () => Navigator.pop(context, true),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: _primaryColor,
                       minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -410,7 +421,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                   OutlinedButton(
                     onPressed: () => Navigator.pop(context, false),
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.border),
+                      side: BorderSide(color: _borderColor),
                       minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -419,7 +430,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                     child: Text(
                       "Edit Allowed Apps",
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: _textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -549,7 +560,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
   Future<int?> _showDurationPickerBottomSheet() async {
     return showModalBottomSheet<int>(
       context: context,
-      backgroundColor: AppColors.background,
+      backgroundColor: _bgColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -564,7 +575,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                 Text(
                   "Set Study Goal",
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: _textPrimary,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -572,7 +583,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                 const SizedBox(height: 8),
                 Text(
                   "Choose how long you want to focus.",
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                  style: TextStyle(color: _textSecondary, fontSize: 14),
                 ),
                 const SizedBox(height: 24),
                 
@@ -613,15 +624,15 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
         height: 64,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isPrimary ? AppColors.primary.withAlpha(20) : AppColors.surface,
+          color: isPrimary ? _primaryColor.withAlpha(20) : _surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isPrimary ? AppColors.primary.withAlpha(80) : AppColors.border),
+          border: Border.all(color: isPrimary ? _primaryColor.withAlpha(80) : _borderColor),
         ),
         child: Text(
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: isPrimary ? AppColors.primary : AppColors.textPrimary,
+            color: isPrimary ? _primaryColor : _textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
@@ -685,15 +696,15 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     if (_isInitializing) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: _bgColor,
         body:
-            Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            Center(child: CircularProgressIndicator(color: _primaryColor)),
       );
     }
 
     if (_errorMessage != null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: _bgColor,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -722,7 +733,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                   "We couldn't start the AI tracking pipeline. You can still use the standard timer or try restarting.",
                   textAlign: TextAlign.center,
                   style:
-                      TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                      TextStyle(color: _textSecondary, fontSize: 14),
                 ),
                 const Spacer(),
                 ElevatedButton(
@@ -732,7 +743,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                     _bootPipeline();
                   }),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: _primaryColor,
                     minimumSize: const Size(double.infinity, 56),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -747,7 +758,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                   onPressed: () => setState(() => _errorMessage = null),
                   child: Text(
                     "Continue without AI",
-                    style: TextStyle(color: AppColors.primary),
+                    style: TextStyle(color: _primaryColor),
                   ),
                 ),
               ],
@@ -772,7 +783,8 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: _bgColor,
+        resizeToAvoidBottomInset: false,
         body: SafeArea(
           child: Stack(
             children: [
@@ -856,13 +868,13 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
         ElevatedButton(
           onPressed: _startSession,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
+            backgroundColor: _primaryColor,
             minimumSize: const Size(double.infinity, 64),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
             elevation: 8,
-            shadowColor: AppColors.primary.withAlpha(100),
+            shadowColor: _primaryColor.withAlpha(100),
           ),
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -889,7 +901,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
         Text(
           "You will choose allowed apps before starting.",
           style: TextStyle(
-            color: AppColors.textSecondary,
+            color: _textSecondary,
             fontSize: 11,
             fontWeight: FontWeight.w500,
           ),
@@ -918,24 +930,24 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: _surfaceColor,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: _borderColor),
                   ),
                   child: Icon(
                     Icons.arrow_back_ios_new_rounded,
-                    color: AppColors.textPrimary,
+                    color: _textPrimary,
                     size: 16,
                   ),
                 ),
               ),
             ),
             const SizedBox(width: 16),
-            CircleAvatar(radius: 5, backgroundColor: AppColors.success),
+            CircleAvatar(radius: 5, backgroundColor: _primaryColor),
             const SizedBox(width: 12),
             Text("AI TRACKING LIVE",
                 style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: _textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2)),
@@ -952,13 +964,13 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: _surfaceColor,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: _borderColor),
             ),
             child: Icon(
               Icons.calculate_rounded,
-              color: AppColors.primary,
+              color: _primaryColor,
               size: 20,
             ),
           ),
@@ -1001,14 +1013,14 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
       children: [
         Text(label,
             style: TextStyle(
-                color: AppColors.textSecondary,
+                color: _textSecondary,
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1)),
         const SizedBox(height: 4),
         Text(value,
             style: TextStyle(
-                color: AppColors.primary,
+                color: _primaryColor,
                 fontSize: 20,
                 fontWeight: FontWeight.bold)),
       ],
@@ -1019,16 +1031,16 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: _surfaceColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: _borderColor, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text("STUDY TIMER",
               style: TextStyle(
-                  color: AppColors.textSecondary,
+                  color: _textSecondary,
                   fontSize: 9,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1)),
@@ -1036,7 +1048,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
           Text(
             _focusController.formattedStudyTime,
             style: TextStyle(
-                color: AppColors.textPrimary,
+                color: _textPrimary,
                 fontSize: 22,
                 fontWeight: FontWeight.bold),
           ),
@@ -1051,7 +1063,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
       children: [
         Text("CURRENT MODE",
             style: TextStyle(
-                color: AppColors.textSecondary,
+                color: _textSecondary,
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1)),
@@ -1068,12 +1080,12 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                 duration: const Duration(milliseconds: 200),
                 padding: EdgeInsets.all(isSelected ? 12 : 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? mode.color : AppColors.surface,
+                  color: isSelected ? mode.color : _surfaceColor,
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: isSelected
                         ? mode.color.withAlpha(200)
-                        : AppColors.border,
+                        : _borderColor,
                     width: 2.0,
                   ),
                   boxShadow: isSelected
@@ -1090,7 +1102,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                   children: [
                     Icon(
                       mode.icon,
-                      color: isSelected ? Colors.white : AppColors.textPrimary,
+                      color: isSelected ? Colors.white : _textPrimary,
                       size: isSelected ? 24 : 20,
                     ),
                     if (isSelected) const SizedBox(height: 4),
@@ -1123,20 +1135,20 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
             width: 110,
             height: 150,
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: _surfaceColor,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.border, width: 1),
+              border: Border.all(color: _borderColor, width: 1),
             ),
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.videocam_off,
-                      color: AppColors.textSecondary, size: 32),
+                      color: _textSecondary, size: 32),
                   const SizedBox(height: 8),
                   Text("OFF",
                       style: TextStyle(
-                          color: AppColors.textSecondary,
+                          color: _textSecondary,
                           fontSize: 10,
                           fontWeight: FontWeight.bold)),
                 ],
@@ -1156,7 +1168,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
               border:
-                  Border.all(color: AppColors.primary.withAlpha(50), width: 1),
+                  Border.all(color: _primaryColor.withAlpha(50), width: 1),
               boxShadow: ThemeController.instance.isDarkMode
                   ? []
                   : [
@@ -1258,23 +1270,23 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isPrimary ? AppColors.primary : AppColors.surface,
+              color: isPrimary ? _primaryColor : _surfaceColor,
               shape: BoxShape.circle,
               border: Border.all(
-                color: isPrimary ? AppColors.primary : AppColors.border,
+                color: isPrimary ? _primaryColor : _borderColor,
                 width: 1,
               ),
               boxShadow: isPrimary
                   ? [
                       BoxShadow(
-                          color: AppColors.primary.withAlpha(40),
+                          color: _primaryColor.withAlpha(40),
                           blurRadius: 15)
                     ]
                   : [],
             ),
             child: Icon(
               icon,
-              color: isPrimary ? Colors.white : AppColors.textPrimary,
+              color: isPrimary ? Colors.white : _textPrimary,
               size: 28,
             ),
           ),
@@ -1283,8 +1295,8 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
             label,
             style: TextStyle(
               color: isActive || isPrimary
-                  ? AppColors.primary
-                  : AppColors.textSecondary,
+                  ? _primaryColor
+                  : _textSecondary,
               fontSize: 10,
               fontWeight: FontWeight.bold,
             ),
@@ -1301,14 +1313,14 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: _surfaceColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text("Set Break Time ☕", style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        title: Text("Set Break Time ☕", style: TextStyle(color: _textPrimary, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Quick Select", style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            Text("Quick Select", style: TextStyle(color: _textSecondary, fontSize: 12)),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1319,7 +1331,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
               ],
             ),
             const SizedBox(height: 24),
-            Text("Custom Time", style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            Text("Custom Time", style: TextStyle(color: _textSecondary, fontSize: 12)),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -1328,12 +1340,12 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                     controller: minController,
                     keyboardType: TextInputType.number,
                     autofocus: true,
-                    style: TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: _textPrimary),
                     decoration: InputDecoration(
                       hintText: "MM",
-                      hintStyle: TextStyle(color: AppColors.textSecondary.withAlpha(100)),
+                      hintStyle: TextStyle(color: _textSecondary.withAlpha(100)),
                       filled: true,
-                      fillColor: AppColors.background,
+                      fillColor: _bgColor,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
@@ -1341,18 +1353,18 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(":", style: TextStyle(color: AppColors.textPrimary, fontSize: 24, fontWeight: FontWeight.bold)),
+                  child: Text(":", style: TextStyle(color: _textPrimary, fontSize: 24, fontWeight: FontWeight.bold)),
                 ),
                 Expanded(
                   child: TextField(
                     controller: secController,
                     keyboardType: TextInputType.number,
-                    style: TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: _textPrimary),
                     decoration: InputDecoration(
                       hintText: "SS",
-                      hintStyle: TextStyle(color: AppColors.textSecondary.withAlpha(100)),
+                      hintStyle: TextStyle(color: _textSecondary.withAlpha(100)),
                       filled: true,
-                      fillColor: AppColors.background,
+                      fillColor: _bgColor,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
@@ -1365,7 +1377,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text("Cancel", style: TextStyle(color: AppColors.textSecondary)),
+            child: Text("Cancel", style: TextStyle(color: _textSecondary)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1379,7 +1391,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: _primaryColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text("Start Break", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
@@ -1396,10 +1408,10 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
         _focusController.startBreak(minutes * 60);
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.background,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: AppColors.border)),
+        backgroundColor: _bgColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: _borderColor)),
       ),
-      child: Text(label, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+      child: Text(label, style: TextStyle(color: _textPrimary, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -1408,14 +1420,14 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: _surfaceColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text("End Session? 🛑",
             style: TextStyle(
-                color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                color: _textPrimary, fontWeight: FontWeight.bold)),
         content: Text(
           "Are you sure you want to end your deep work session now? Your progress will be saved.",
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          style: TextStyle(color: _textSecondary, fontSize: 14),
         ),
         actions: [
           TextButton(
@@ -1427,7 +1439,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
             },
             child: Text("Keep Studying",
                 style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: _textSecondary,
                     fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
@@ -1436,7 +1448,7 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
               Navigator.pop(context); // back
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: _primaryColor,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
@@ -1453,36 +1465,41 @@ class _FocusViewState extends State<FocusView> with WidgetsBindingObserver {
     return Container(
       color: Colors.black.withAlpha(220),
       child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.coffee_rounded, size: 80, color: Colors.orangeAccent),
-            const SizedBox(height: 24),
-            const Text("Break Time!", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Text("Returning in ${_focusController.formattedBreakTime}", style: const TextStyle(color: Colors.white70, fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 48),
-            ElevatedButton(
-              onPressed: () async {
-                _isGameRouteActive = true;
-                await Navigator.push(context, MaterialPageRoute(builder: (_) => const GamesListView(isStandalone: true)));
-                _isGameRouteActive = false;
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              child: const Text("Play a Mini-Game 🎮", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.coffee_rounded, size: 80, color: Colors.orangeAccent),
+                const SizedBox(height: 24),
+                const Text("Break Time!", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Text("Returning in ${_focusController.formattedBreakTime}", style: const TextStyle(color: Colors.white70, fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 48),
+                ElevatedButton(
+                  onPressed: () async {
+                    _isGameRouteActive = true;
+                    await Navigator.push(context, MaterialPageRoute(builder: (_) => const GamesListView(isStandalone: true)));
+                    _isGameRouteActive = false;
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _accentColor,
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text("Play a Mini-Game 🎮", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 24),
+                TextButton(
+                  onPressed: () {
+                    _focusController.endBreak();
+                  },
+                  child: const Text("Resume Focus Now", style: TextStyle(color: Colors.orangeAccent, fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            TextButton(
-              onPressed: () {
-                _focusController.endBreak();
-              },
-              child: const Text("Resume Focus Now", style: TextStyle(color: Colors.orangeAccent, fontSize: 18, fontWeight: FontWeight.bold)),
-            ),
-          ],
+          ),
         ),
       ),
     );
